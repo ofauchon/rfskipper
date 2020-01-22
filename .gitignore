@@ -1,0 +1,5 @@
+src/*.d
+src/*.o
+src/*.bin
+src/*.elf
+src/mapfile
