@@ -24,22 +24,24 @@
 
 #include "general.h"
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 #if defined(LIBFTDI)
 	platform_init(argc, argv);
 #else
-	(void) argc;
-	(void) argv;
+	(void)argc;
+	(void)argv;
 	platform_init();
 #endif
 
-	while (true) {
-        asm("nop");
+	while (true)
+	{
+		platform_delay(1000);
+		printf("Hello from main.\r\n");
+
+		asm("nop");
 	}
 
 	/* Should never get here */
 	return 0;
 }
-

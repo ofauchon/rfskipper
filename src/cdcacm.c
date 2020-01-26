@@ -26,7 +26,6 @@
 
 #include "general.h"
 #include "cdcacm.h"
-#include "usbuart.h"
 
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/usb/usbd.h>
@@ -34,6 +33,8 @@
 #include <libopencm3/cm3/scb.h>
 #include <libopencm3/stm32/usart.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 
 usbd_device * usbdev;
 
@@ -418,6 +419,80 @@ static const char *usb_strings[] = {
 	"Black Magic UART Port",
 };
 
+
+/* *******************  END CONFIGUATION ************************ */
+
+
+/* *******************  Required to have printf ************************ */
+
+int _write(int file, const char *ptr, ssize_t len) {
+    // If the target file isn't stdout/stderr, then return an error
+    // since we don't _actually_ support file handles
+    if (file != STDOUT_FILENO && file != STDERR_FILENO) {
+        // Set the errno code (requires errno.h)
+        errno = EIO;
+        return -1;
+    }
+
+	int i = usbd_ep_write_packet(usbdev, 1, ptr, len);
+
+    return i;
+}
+
+
+/* *******************  Required to have printf ************************ */
+
+
+
+
+// Callback called when bytes to forward to uart
+static void usbuart_usb_out_cb(int USBUSART, usbd_device *dev, uint8_t ep, int CDCACM_UART_ENDPOINT)
+{
+        (void)ep;
+		(void)USBUSART; 
+
+		// Read usb packet data
+        char buf[CDCACM_PACKET_SIZE];
+        int len = usbd_ep_read_packet(dev, CDCACM_UART_ENDPOINT,
+                                        buf, CDCACM_PACKET_SIZE);
+
+		gpio_toggle(LED_PORT_UART, LED_UART);
+
+		// Send back to USB (Loop)
+		printf("From callback EP:%d size %d :\r\n", CDCACM_UART_ENDPOINT, len);
+		usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, buf, len);
+
+
+}
+
+// Callback called when bytes are sent to device
+void usbuart1_usb_out_cb(usbd_device *dev, uint8_t ep)
+{
+    usbuart_usb_out_cb(USART1, dev, ep, 5);
+}
+// Callback called when bytes are sent to device
+void usbuart2_usb_out_cb(usbd_device *dev, uint8_t ep)
+{
+    usbuart_usb_out_cb(USART2, dev, ep, 1);
+}
+
+// Callback called when bytes are sent to device
+void usbuart3_usb_out_cb(usbd_device *dev, uint8_t ep)
+{
+    usbuart_usb_out_cb(USART3, dev, ep, 3);
+}
+
+void usbuart_usb_in_cb(usbd_device *dev, uint8_t ep)
+{
+        (void) dev;
+        (void) ep;
+}
+
+/* *******************  END CALLBACKS ************************ */
+
+
+
+
 static enum usbd_request_return_codes cdcacm_control_request(usbd_device *dev,
 		struct usb_setup_data *req, uint8_t **buf, uint16_t *len,
 		void (**complete)(usbd_device *dev, struct usb_setup_data *req))
@@ -438,13 +513,13 @@ static enum usbd_request_return_codes cdcacm_control_request(usbd_device *dev,
 
 		switch(req->wIndex) {
 		case 0:
-			usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART2);
+		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART2);
 			return 1;
 		case 2:
-			usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART3);
+		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART3);
 			return 1;
 		case 4:
-			usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART1);
+		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART1);
 			return 1;
 		default:
 			return 0;

@@ -81,13 +81,7 @@ void platform_request_boot(void);
 #define IRQ_PRI_USBUSART_TIM	(3 << 4)
 #define IRQ_PRI_USB_VBUS	(14 << 4)
 
-#ifdef ENABLE_DEBUG
-extern bool debug_bmp;
-int usbuart_debug_write(const char *buf, size_t len);
-# define DEBUG printf
-#else
-# define DEBUG(...)
-#endif
+
 
 extern uint16_t led_idle_run;
 #define LED_IDLE_RUN            led_idle_run
@@ -95,7 +89,6 @@ extern uint16_t led_idle_run;
 #define SET_IDLE_STATE(state)	{gpio_set_val(LED_PORT, led_idle_run, state);}
 #define SET_ERROR_STATE(x)
 
-extern uint32_t detect_rev(void);
 
 /* Use newlib provided integer only stdio functions */
 #define sscanf siscanf
@@ -103,6 +96,7 @@ extern uint32_t detect_rev(void);
 #define vasprintf vasiprintf
 #define snprintf sniprintf
 
+/*
 #define gpio_set_val(port, pin, val) do {	\
 	if(val)					\
 		gpio_set((port), (pin));	\
@@ -128,5 +122,6 @@ static inline uint16_t _gpio_get(uint32_t gpioport, uint16_t gpios)
 }
 #define gpio_get _gpio_get
 
+*/
 #endif
 

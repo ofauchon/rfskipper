@@ -20,7 +20,6 @@ SRC =			\
 	main.c		\
 	platform.c	\
 	cdcacm.c	\
-	usbuart.c	\
 
 CROSS_COMPILE ?= arm-none-eabi-
 CC = $(CROSS_COMPILE)gcc
@@ -43,8 +42,8 @@ else
 LDFLAGS += --specs=nosys.specs
 endif
 
-flash:
-	openocd -f interface/stlink-v2.cfg  -f target/stm32f1x_clone.cfg -c "init" -c "reset init" -c "halt" -c "flash write_image erase rfskipper.bin 0x08000000" -c "shutdown"
+#flash:
+#	openocd -f interface/stlink-v2.cfg  -f target/stm32f1x_clone.cfg -c "init" -c "reset init" -c "halt" -c "flash write_image erase rfskipper.bin 0x08000000" -c "shutdown"
 
 
 all:	rfskipper.bin
