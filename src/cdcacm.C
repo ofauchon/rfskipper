@@ -24,7 +24,7 @@
  * The device's unique id is used as the USB serial number string.
  */
 
-#include "general.h"
+#include "platform.h"
 #include "cdcacm.h"
 
 #include <libopencm3/cm3/nvic.h>
@@ -39,6 +39,7 @@
 usbd_device * usbdev;
 
 static int configured;
+
 
 static void cdcacm_set_modem_state(usbd_device *dev, int iface, bool dsr, bool dcd);
 
@@ -494,7 +495,12 @@ static void usbuart_usb_out_cb(int USBUSART, usbd_device *dev, uint8_t ep, int C
 		gpio_toggle(LED_PORT_UART, LED_UART);
 
 		// Send back to USB (Loop)
-		printf("From callback EP:%d size %d :\r\n", CDCACM_UART_ENDPOINT, len);
+		char h[]="IN X Y:\r\n";
+		h[3]= '0' + (ep & 0xf);
+		h[5]= '0' + ( CDCACM_UART_ENDPOINT);
+		usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, h, 10);
+
+		//printf("From callback EP:%d size %d :\r\n", CDCACM_UART_ENDPOINT, len);
 		usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, buf, len);
 
 
@@ -662,4 +668,11 @@ void cdcacm_init(void)
 void USB_ISR(void)
 {
 	usbd_poll(usbdev);
+}
+
+
+void usbuart_write(uint8_t ep, const char *buf, uint8_t len){
+	if (configured)
+		usbd_ep_write_packet(usbdev, ep, buf, len);
+
 }

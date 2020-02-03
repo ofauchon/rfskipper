@@ -512,7 +512,7 @@ void setup() {
    o_usart.enableRxInterrupt();
    o_usart.enable();
 
-//   o_usart.puts("USART initialized\n");
+   o_usart.puts("USART initialized\n");
    o_usart.printf(
          "20;00;Nodo RadioFrequencyLink - RFLink Gateway V1.1 - R%02d;\n", 45);
 
@@ -527,8 +527,8 @@ void setup() {
    o_rfm69.setRssiThreshold(-127);
    u8_version = o_rfm69.getVersion();
    (void)(u8_version); // FIXME => unused
-//   o_usart.printf("RFM69 version %d-%d\n", u8_version >> 4, u8_version & 0x0f);
-//   o_usart.puts("Trying to calibrate RFM69 RSSI\n");
+   o_usart.printf("RFM69 version %d-%d\n", u8_version >> 4, u8_version & 0x0f);
+   o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;
    for (int i_loop = 0; i_loop < 1024; i_loop++) {
       i_rssiAverage += o_rfm69.readRSSI(false);
@@ -574,8 +574,8 @@ void loop() {
    }
 
    if ((millis() & 1023) == 0) {
-//      int i_rssi = o_rfm69.readRSSI(false);
-//      o_usart.printf("RSSI=%d\n", i_rssi);
+      int i_rssi = o_rfm69.readRSSI(false);
+      o_usart.printf("RSSI=%d\n", i_rssi);
       gpio_toggle(GPIOC, GPIO13);
    }
 }

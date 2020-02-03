@@ -37,4 +37,7 @@ void cdcacm_init(void);
 int cdcacm_get_config(void);
 int cdcacm_get_dtr(void);
 
+void usbuart_write(uint8_t ep, const char *buf, uint8_t len);
+
+
 #endif
