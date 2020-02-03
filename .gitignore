@@ -1,6 +1,7 @@
-src/*.d
-src/*.o
-src/*.bin
-src/*.elf
-src/mapfile
+**/*.d
+**/*.o
+**/*.bin
+**/*.elf
+**/mapfile
+src/version.h
 .vscode
