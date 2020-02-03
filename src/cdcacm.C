@@ -67,6 +67,8 @@ static const struct usb_endpoint_descriptor uart_comm_endp1[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
 	.bInterval = 255,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_endpoint_descriptor uart_comm_endp2[] = {{
@@ -76,6 +78,8 @@ static const struct usb_endpoint_descriptor uart_comm_endp2[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
 	.bInterval = 255,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_endpoint_descriptor uart_comm_endp3[] = {{
@@ -85,6 +89,8 @@ static const struct usb_endpoint_descriptor uart_comm_endp3[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
 	.bInterval = 255,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_endpoint_descriptor uart_data_endp1[] = {{
@@ -94,6 +100,8 @@ static const struct usb_endpoint_descriptor uart_data_endp1[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0	
 }, {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
@@ -101,6 +109,8 @@ static const struct usb_endpoint_descriptor uart_data_endp1[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_endpoint_descriptor uart_data_endp2[] = {{
@@ -110,6 +120,8 @@ static const struct usb_endpoint_descriptor uart_data_endp2[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0
 }, {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
@@ -117,6 +129,8 @@ static const struct usb_endpoint_descriptor uart_data_endp2[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_endpoint_descriptor uart_data_endp3[] = {{
@@ -126,6 +140,8 @@ static const struct usb_endpoint_descriptor uart_data_endp3[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0
 }, {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
@@ -133,6 +149,8 @@ static const struct usb_endpoint_descriptor uart_data_endp3[] = {{
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
 	.bInterval = 1,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct {
@@ -307,6 +325,9 @@ static const struct usb_interface_descriptor uart_data_iface1[] = {{
 	.iInterface = 0,
 
 	.endpoint = uart_data_endp1,
+	.extra = 0,
+	.extralen =0
+
 }};
 
 
@@ -322,6 +343,9 @@ static const struct usb_interface_descriptor uart_data_iface2[] = {{
 	.iInterface = 0,
 
 	.endpoint = uart_data_endp2,
+	.extra = 0,
+	.extralen =0
+
 }};
 
 
@@ -337,6 +361,8 @@ static const struct usb_interface_descriptor uart_data_iface3[] = {{
 	.iInterface = 0,
 
 	.endpoint = uart_data_endp3,
+	.extra = 0,
+	.extralen =0
 }};
 
 static const struct usb_iface_assoc_descriptor uart_assoc1 = {
@@ -374,25 +400,34 @@ static const struct usb_iface_assoc_descriptor uart_assoc3 = {
 
 
 static const struct usb_interface ifaces[] = {{
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
 	.iface_assoc = &uart_assoc2,
 	.altsetting = uart_comm_iface2,
 }, {
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
+	.iface_assoc = NULL ,
 	.altsetting = uart_data_iface2,
 }, {
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
 	.iface_assoc = &uart_assoc3,
 	.altsetting = uart_comm_iface3,
 }, {
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
+	.iface_assoc = NULL ,
 	.altsetting = uart_data_iface3,
 }, {
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
 	.iface_assoc = &uart_assoc1,
 	.altsetting = uart_comm_iface1,
 }, {
+	.cur_altsetting = NULL,	
 	.num_altsetting = 1,
+	.iface_assoc = NULL ,
 	.altsetting = uart_data_iface1,
 }};
 
@@ -506,26 +541,26 @@ static enum usbd_request_return_codes cdcacm_control_request(usbd_device *dev,
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
 		cdcacm_set_modem_state(dev, req->wIndex, true, true);
 		/* Ignore since is not for GDB interface */
-        return 1;
+        return USBD_REQ_HANDLED;
 	case USB_CDC_REQ_SET_LINE_CODING:
 		if(*len < sizeof(struct usb_cdc_line_coding))
-			return 0;
+			return USBD_REQ_NOTSUPP;
 
 		switch(req->wIndex) {
 		case 0:
 		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART2);
-			return 1;
+			return USBD_REQ_HANDLED;
 		case 2:
 		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART3);
-			return 1;
+			return USBD_REQ_HANDLED;
 		case 4:
 		//	usbuart_set_line_coding((struct usb_cdc_line_coding*)*buf, USART1);
-			return 1;
+			return USBD_REQ_HANDLED;
 		default:
-			return 0;
+			return USBD_REQ_NOTSUPP;
 		}
 	}
-	return 0;
+	return USBD_REQ_NOTSUPP;
 }
 
 int cdcacm_get_config(void)
@@ -536,7 +571,7 @@ int cdcacm_get_config(void)
 static void cdcacm_set_modem_state(usbd_device *dev, int iface, bool dsr, bool dcd)
 {
 	char buf[10];
-	struct usb_cdc_notification *notif = (void*)buf;
+	struct usb_cdc_notification *notif = (struct usb_cdc_notification*)buf;
 	/* We echo signals back to host as notification */
 	notif->bmRequestType = 0xA1;
 	notif->bNotification = USB_CDC_NOTIFY_SERIAL_STATE;

@@ -21,7 +21,10 @@
 #ifndef __GENERAL_H
 #define __GENERAL_H
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>

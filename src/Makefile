@@ -5,11 +5,18 @@ MAKEFLAGS += --no-print-dir
 Q := @
 endif
 
+CROSS_COMPILE = arm-none-eabi-
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)gcc
+OBJCOPY = $(CROSS_COMPILE)objcopy
+
+
 OPT_FLAGS ?= -O2
 
-CFLAGS += -Wall -Wextra -Werror -Wno-char-subscripts\
-	$(OPT_FLAGS) -std=gnu99 -g3 -MD \
-	-I.
+CXXFLAGS += -Wall -Wextra -Werror -Wno-char-subscripts\
+	$(OPT_FLAGS) -g3 -MD \
+	-I. -I ./include -I../libopencm3/include -DSTM32F1 -DDISCOVERY_STLINK  \
+	-mthumb  -march=armv7-m
 LDFLAGS += $(OPT_FLAGS)
 
 ifeq ($(ENABLE_DEBUG), 1)
@@ -17,13 +24,18 @@ CFLAGS += -DENABLE_DEBUG
 endif
 
 SRC =			\
-	main.c		\
-	platform.c	\
-	cdcacm.c	\
-
-CROSS_COMPILE ?= arm-none-eabi-
-CC = $(CROSS_COMPILE)gcc
-OBJCOPY = $(CROSS_COMPILE)objcopy
+	spi.C		\
+	radio.C		\
+	rfm69.C		\
+	usart.C		\
+	ring.C		\
+	cdcacm.C	\
+	plugin.C	\
+	eventqueue.C	\
+	plugin/newKaku.C \
+	plugin/powerFix.C \
+	plugin/somfy.C \
+	main.C		\
 
 OPT_FLAGS = -Os
 CFLAGS += -mcpu=cortex-m3 -mthumb \
@@ -51,7 +63,7 @@ all:	rfskipper.bin
 host_clean:
 	-$(Q)$(RM) rfskipper.bin
 
-OBJ = $(SRC:.c=.o)
+OBJ = $(SRC:.C=.o)
 
 rfskipper.elf: version.h $(OBJ)
 	@echo "  LD      $@"
@@ -73,6 +85,7 @@ rfskipper.elf: version.h $(OBJ)
 
 clean:	host_clean
 	$(Q)echo "  CLEAN"
+	-$(Q)$(RM) -f plugin/*.o plugin/*.d 
 	-$(Q)$(RM) -f *.o *.d *~ *.elf *.bin $(HOSTFILES)
 	-$(Q)$(RM) -f mapfile version.h
 
