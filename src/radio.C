@@ -7,6 +7,8 @@
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/spi.h>
 #include <libopencm3/stm32/timer.h>
+#include <libopencm3/cm3/systick.h>
+
 
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/cortex.h>
@@ -56,7 +58,6 @@ namespace {
 }
 
 // global variables accessed from the plugins
-USART o_usart;
 int i_sequenceNumber = 0;
 volatile uint32_t u32_systemMillis = 0;
 
@@ -125,7 +126,8 @@ int __attribute__ ((noinline)) testAndSetState(volatile Rfm69State &e_state,
 
 /*----------------------------------------------------------------------------*/
 
-extern "C" void SysTick_Handler() {
+extern "C" void sys_tick_handler(void) {
+
    ++u32_systemMillis;
 
    if (e_state == RECEIVING && u32_systemMillis >= u32_txTimeout) {
@@ -133,6 +135,7 @@ extern "C" void SysTick_Handler() {
          o_queue.put(EVENT_RF_STOP_IN, 0);
       }
     }
+
 }
 
 /*----------------------------------------------------------------------------*/
@@ -181,6 +184,7 @@ void rfm69Reset(void) {
 
 void timer3Init() {
    /* Enable TIM3 clock. */
+   o_usart.printf("RADIO::timer3Init\n");
    rcc_periph_clock_enable(RCC_TIM3);
 }
 
@@ -198,7 +202,7 @@ void timer3SetupInputCapture(uint16_t u16_autoReload, uint16_t u16_prescaler) {
 
    /* Timer global mode:
     * - No divider (72Mhz)
-    * - Alignment edge
+    * - Alignment edgecdcacm_init
     * - Direction up
     * (These are actually default values after reset above, so this call
     * is strictly unnecessary, but demos the api for alternative settings)
@@ -485,10 +489,31 @@ void sendRfStop() {
 void setup() {
    uint8_t u8_version;
 
+   // Create the global message queue
    o_queue.init();
 
+   // Init USART device on A9-TX and A10-RX
+   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+   GPIO_USART1_TX);
+   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
+   o_usart.init(USART1_BASE);
+   o_usart.enableRxInterrupt();
+   o_usart.enable();
+   nvic_enable_irq(NVIC_USART1_IRQ);
+   o_usart.puts("USART initialized\n");
+   o_usart.printf("20;00;Nodo RadioFrequencyLink - RFLink Gateway V1.1 - R%02d;\n", 45);
+
+	/* set up the SysTick function (1mS interrupts) */
+	systick_set_clocksource(STK_CSR_CLKSOURCE_AHB);
+	STK_CVR = 0;
+	systick_set_reload(rcc_ahb_frequency / 1000);
+	systick_counter_enable();
+	systick_interrupt_enable();
+
+   // Init Timer3
    timer3Init();
 
+   // Usb Virual Uart Setup
    cdcacm_init();
 
    // LED on BluePill F103 is PC13
@@ -499,22 +524,6 @@ void setup() {
    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
          GPIO0);
 
-   // Init USART device on A9-TX and A10-RX
-   nvic_enable_irq(NVIC_USART1_IRQ);
-   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
-   GPIO_USART1_TX);
-   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
-
-//   o_usartIn.init(pu8_usartIn, sizeof(pu8_usartIn));
-//   o_usartOut.init(pu8_usartOut, sizeof(pu8_usartOut));
-
-   o_usart.init(USART1_BASE);
-   o_usart.enableRxInterrupt();
-   o_usart.enable();
-
-   o_usart.puts("USART initialized\n");
-   o_usart.printf(
-         "20;00;Nodo RadioFrequencyLink - RFLink Gateway V1.1 - R%02d;\n", 45);
 
    // Init RFM69 device
    o_rfm69.init(SPI1, NULL, rfm69Reset, true);
@@ -523,10 +532,9 @@ void setup() {
    o_rfm69.setBitRate(RFM69_BITRATE_TO_REG(32000));
    o_rfm69.setOOKPeak(RF_OOKPEAK_THRESHTYPE_FIXED);
    o_rfm69.setMode(RFM69_MODE_RX);
-
    o_rfm69.setRssiThreshold(-127);
    u8_version = o_rfm69.getVersion();
-   (void)(u8_version); // FIXME => unused
+
    o_usart.printf("RFM69 version %d-%d\n", u8_version >> 4, u8_version & 0x0f);
    o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;
@@ -535,7 +543,7 @@ void setup() {
       msleep(10);
    }
    i_rssiAverage /= 1024;
-//   o_usart.printf("Average RSSI=%d\n", i_rssiAverage);
+   o_usart.printf("Calibration result: Average RSSI=%d\n", i_rssiAverage);
 
    // should be average RSSI when no signal + 20dB (~ -80dB)
    o_rfm69.setFixedThreshold(i_rssiAverage + 20);

@@ -3,6 +3,9 @@
 #include <libopencm3/stm32/rcc.h>
 
 #include "spi.H"
+#include "usart.H"
+
+extern USART o_usart;
 
 /*----------------------------------------------------------------------------*/
 /*
@@ -93,6 +96,7 @@ void SPI::recvBuffer(uint16_t *pu16_buffer, uint16_t u16_nopMask, int i_size) {
  * Enable CRC.
  */
 void SPI::init(SPI_BASE o_spi, SPI_ChipSelect pf_chipSelect) {
+   o_usart.printf("SPI::init\n");
 
    _o_spi = o_spi;
    _pf_chipSelect = pf_chipSelect;
@@ -132,6 +136,8 @@ void SPI::init(SPI_BASE o_spi, SPI_ChipSelect pf_chipSelect) {
    SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
    SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
    spi_enable_crc(o_spi);
+   o_usart.printf("SPI::init end\n");
+
 }
 
 /*----------------------------------------------------------------------------*/

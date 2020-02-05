@@ -11,6 +11,8 @@
 
 #include "rfm69.H"
 
+extern USART o_usart;
+
 /*----------------------------------------------------------------------------*/
 /* Private functions */
 
@@ -184,9 +186,11 @@ void RFM69::writeRegisterMulti(uint8_t u8_register, const uint8_t *pu8_data,
  * device if calling this function.
  */
 void RFM69::reset() {
-   if (NULL != _pf_hardReset) {
-      _pf_hardReset();
-   }
+   o_usart.printf("RFM69::reset with GPIO \n");
+   gpio_set(GPIOA, GPIO0);
+   msleep(10);
+   gpio_clear(GPIOA, GPIO0);
+   msleep(100);
 
    _e_mode = RFM69_MODE_STANDBY;
 }
@@ -244,6 +248,7 @@ uint8_t RFM69::init(SPI_BASE o_spiBase, SPI_ChipSelect pf_chipSelect,
     * in Motorola/Freescale nomenclature. Only the slave side is implemented.
     * The data byte is transmitted MSB first.
     */
+   o_usart.printf("RFM69::init\n");
    _o_spi.init(o_spiBase, pf_chipSelect);
    _o_spi.setFullDuplexMode();
    _o_spi.setMasterMode();
@@ -266,10 +271,14 @@ uint8_t RFM69::init(SPI_BASE o_spiBase, SPI_ChipSelect pf_chipSelect,
    _pf_hardReset = pf_hardReset;
    _u8_nodeId = 2;
    _u32_networkId = 0x2D64;
+   o_usart.printf("RFM69::init A1\n");
 
    // set base configuration
    reset();
+   o_usart.printf("RFM69::init A2\n");
    setCustomConfig(g_ppu8_rfm69BaseConfig, sizeof(g_ppu8_rfm69BaseConfig) / 2);
+
+   o_usart.printf("RFM69::init End\n");
 
    /* Return OK */
    return 1;
