@@ -271,6 +271,8 @@ uint8_t RFM69::init(SPI_BASE o_spiBase, SPI_ChipSelect pf_chipSelect,
    _pf_hardReset = pf_hardReset;
    _u8_nodeId = 2;
    _u32_networkId = 0x2D64;
+   _u32_frequency = 0;
+   
    o_usart.printf("RFM69::init A1\n");
 
    // set base configuration
@@ -917,6 +919,10 @@ void RFM69::setDataPin(GPIO_PORT h_gpioPortData, GPIO_PIN h_gpioPinData) {
  * @param frequency Carrier frequency in Hz
  */
 void RFM69::setFrequency(uint32_t u32_frequency) {
+   if (u32_frequency == _u32_frequency) {
+      return;
+   }
+
    // switch to standby if TX/RX was active
    if (RFM69_MODE_RX == _e_mode || RFM69_MODE_TX == _e_mode) {
       setMode(RFM69_MODE_STANDBY);
@@ -929,6 +935,8 @@ void RFM69::setFrequency(uint32_t u32_frequency) {
    writeRegister(REG_FRFMSB, u32_frequency >> 16);
    writeRegister(REG_FRFMID, u32_frequency >> 8);
    writeRegister(REG_FRFLSB, u32_frequency);
+
+   _u32_frequency = u32_frequency;
 }
 
 /*----------------------------------------------------------------------------*/
