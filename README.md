@@ -36,6 +36,25 @@ Calibration result: Average RSSI=-101
 20;03;NewKaku;ID=02364b5a;SWITCH=7;CMD=OFF;
 20;04;NewKaku;ID=0034a05a;SWITCH=8;CMD=ON;
 
+```
+
+# Debug commands: 
+
+```
+$ picocom --imap lfcrlf --omap crcrlf -b 57600 -c /dev/ttyUSB0
+
+# Simple ping/pong
+10;PING;
+20;00;PONG;
+
+# DUMP RFM69 registers:
+10;RFDUMP;
+[0x01]: 0x10 0b00010000
+[0x02]: 0x68 0b01101000
+[0x03]: 0x03 0b00000011
+[0x04]: 0xE8 0b11101000
+[0x05]: 0x00 0b00000000
+...
 
 ```
 
