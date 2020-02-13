@@ -70,6 +70,7 @@ private:
    GPIO_PORT _h_gpioPortData;
    GPIO_PIN _h_gpioPinData;
 
+   uint32_t _u32_frequency;
    uint32_t _u32_networkId;
    uint8_t _u8_nodeId;
 
