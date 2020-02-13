@@ -136,7 +136,6 @@ void SPI::init(SPI_BASE o_spi, SPI_ChipSelect pf_chipSelect) {
    SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
    SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
    spi_enable_crc(o_spi);
-   o_usart.printf("SPI::init end\n");
 
 }
 

@@ -273,11 +273,8 @@ uint8_t RFM69::init(SPI_BASE o_spiBase, SPI_ChipSelect pf_chipSelect,
    _u32_networkId = 0x2D64;
    _u32_frequency = 0;
    
-   o_usart.printf("RFM69::init A1\n");
-
    // set base configuration
    reset();
-   o_usart.printf("RFM69::init A2\n");
    setCustomConfig(g_ppu8_rfm69BaseConfig, sizeof(g_ppu8_rfm69BaseConfig) / 2);
 
    o_usart.printf("RFM69::init End\n");
