@@ -3,5 +3,5 @@
 **/*.bin
 **/*.elf
 **/mapfile
+**/.vscode
 src/version.h
-.vscode

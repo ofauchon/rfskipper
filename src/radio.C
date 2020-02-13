@@ -140,7 +140,7 @@ extern "C" void sys_tick_handler(void) {
 
 /*----------------------------------------------------------------------------*/
 
-extern "C" void USART1_IRQHandler(void) {
+extern "C" void usart1_isr(void) {
    /* Check if we were called because of RXNE. */
    if (((USART_CR1(USART1) & USART_CR1_RXNEIE) != 0)
          && ((USART_SR(USART1) & USART_SR_RXNE) != 0)) {
@@ -284,7 +284,7 @@ void timer3SetupOutputCompare(uint16_t u16_autoReload, uint16_t u16_prescaler) {
 /*----------------------------------------------------------------------------*/
 
 
-extern "C" void TIM3_IRQHandler(void) {
+extern "C" void tim3_isr(void) {
    static uint16_t u16_prevTimer;
    uint16_t u16_timer;
    uint16_t u16_pulse;
@@ -582,8 +582,8 @@ void loop() {
    }
 
    if ((millis() & 1023) == 0) {
-      int i_rssi = o_rfm69.readRSSI(false);
-      o_usart.printf("RSSI=%d\n", i_rssi);
+      //int i_rssi = o_rfm69.readRSSI(false);
+     // o_usart.printf("RSSI=%d\n", i_rssi);
       gpio_toggle(GPIOC, GPIO13);
    }
 }
