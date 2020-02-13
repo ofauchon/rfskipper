@@ -19,5 +19,5 @@ clean:
 	$(Q)$(MAKE) $(MFLAGS) -C src $@
 
 flash:
-	 openocd -f interface/stlink-v2.cfg  -f target/stm32f1x_clone.cfg -c "init" -c "reset init" -c "halt" -c "flash write_image erase src/rfskipper.bin 0x08000000" -c "shutdown"
+	 openocd -f interface/stlink-v2.cfg  -f target/stm32f1x.cfg -c "init" -c "reset init" -c "halt" -c "flash write_image erase src/rfskipper.bin 0x08000000" -c "reset" -c "shutdown"
 
