@@ -1,5 +1,3 @@
-ENABLE_DEBUG ?=
-
 ifneq ($(V), 1)
 MAKEFLAGS += --no-print-dir
 Q := @
@@ -33,9 +31,6 @@ CXXFLAGS += -Wall -Wextra -Werror -Wno-char-subscripts\
 	-mthumb  -march=armv7-m
 LDFLAGS += $(OPT_FLAGS)
 
-ifeq ($(ENABLE_DEBUG), 1)
-CFLAGS += -DENABLE_DEBUG
-endif
 
 OPT_FLAGS = -Os
 CFLAGS += -mcpu=cortex-m3 -mthumb \
@@ -47,12 +42,6 @@ LDFLAGS := $(LDFLAGS) --specs=nano.specs \
 	-Wl,-T,rfskipper.ld -nostartfiles -lc \
 	-Wl,-Map=mapfile -mthumb -mcpu=cortex-m3 -Wl,-gc-sections \
 	-L../libopencm3/lib
-
-ifeq ($(ENABLE_DEBUG), 1)
-LDFLAGS += --specs=rdimon.specs
-else
-LDFLAGS += --specs=nosys.specs
-endif
 
 all:	rfskipper.bin
 
