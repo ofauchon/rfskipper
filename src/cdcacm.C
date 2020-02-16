@@ -43,7 +43,7 @@ static int configured;
 
 static void cdcacm_set_modem_state(usbd_device *dev, int iface, bool dsr, bool dcd);
 
-static const struct usb_device_descriptor dev = {
+static const struct usb_device_descriptor dev_desc = {
 	.bLength = USB_DT_DEVICE_SIZE,
 	.bDescriptorType = USB_DT_DEVICE,
 	.bcdUSB = 0x0200,
@@ -655,7 +655,7 @@ void cdcacm_init(void)
 
 	serialno_read(serial_no);
 
-	usbdev = usbd_init(&USB_DRIVER, &dev, &config, usb_strings,
+	usbdev = usbd_init(&USB_DRIVER, &dev_desc, &config, usb_strings,
 			    sizeof(usb_strings)/sizeof(char *),
 			    usbd_control_buffer, sizeof(usbd_control_buffer));
 
