@@ -987,8 +987,7 @@ void RFM69::setBitRate(uint32_t u32_bitrate) {
  *
  * Symbol 'DEBUG' has to be defined.
  */
-void RFM69::dumpRegisters(USART& o_usart) {
-   (void)(o_usart);
+void RFM69::dumpRegisters(void) {
 #ifdef DEBUG
    uint8_t u8_value;
 
