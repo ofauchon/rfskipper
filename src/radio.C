@@ -387,7 +387,7 @@ void recvUsart() {
          o_usart.printf("20;%02X;RFDEBUG=%s;\n", i_sequenceNumber++,
                b_rfDebug ? "ON" : "OFF");
       } else if (memcmp(pc_src, "RFDUMP", 6) == 0) {
-         o_rfm69.dumpRegisters(o_usart);
+         o_rfm69.dumpRegisters();
       } else {
          getParamAsString(&pc_src, &pc_type);
 
