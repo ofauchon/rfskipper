@@ -17,31 +17,41 @@ SRC =			\
 	plugin/somfy.C \
 	main.C		\
 
-CROSS_COMPILE = arm-none-eabi-
-CC = $(CROSS_COMPILE)gcc
-CXX = $(CROSS_COMPILE)gcc
-OBJCOPY = $(CROSS_COMPILE)objcopy
 
-OPT_FLAGS ?= -O2
-
-CXXFLAGS += -Wall -Wextra -Werror -Wno-char-subscripts\
-	$(OPT_FLAGS) -g3 -MD \
-	-I . -I ../inc -I../libopencm3/include \
-	-DSTM32F1 -DDISCOVERY_STLINK  \
-	-mthumb  -march=armv7-m
-LDFLAGS += $(OPT_FLAGS)
+PREFIX           = arm-none-eabi
+CC		:= $(PREFIX)-gcc
+CXX		:= $(PREFIX)-g++
+LD		:= $(PREFIX)-gcc
+AR		:= $(PREFIX)-ar
+AS		:= $(PREFIX)-as
+SZ		:= $(PREFIX)-size
+OBJCOPY		:= $(PREFIX)-objcopy
+OBJDUMP		:= $(PREFIX)-objdump
+GDB		:= $(PREFIX)-gdb
 
 
-OPT_FLAGS = -Os
-CFLAGS += -mcpu=cortex-m3 -mthumb \
-	-DSTM32F1 -DDISCOVERY_STLINK -I../libopencm3/include \
-	-I .
+CFLAGS		+= -O0 -g
+CFLAGS		+= -Wextra -Wshadow -Wimplicit-function-declaration
+CFLAGS		+= -Wredundant-decls -Wmissing-prototypes -Wstrict-prototypes
+CFLAGS		+= -fno-common -ffunction-sections -fdata-sections
 
-LDFLAGS := $(LDFLAGS) --specs=nano.specs \
-	-lopencm3_stm32f1 -Wl,--defsym,_stack=0x20005000 \
-	-Wl,-T,rfskipper.ld -nostartfiles -lc \
-	-Wl,-Map=mapfile -mthumb -mcpu=cortex-m3 -Wl,-gc-sections \
-	-L../libopencm3/lib
+CXXFLAGS	+= -Os -g
+CXXFLAGS	+= -Wextra -Wshadow -Wredundant-decls  -Weffc++
+CXXFLAGS	+= -fno-common -ffunction-sections -fdata-sections
+
+CPPFLAGS	+= -MD
+CPPFLAGS	+= -Wall -Wundef
+CPPFLAGS	+= -I . -I ../inc -I../libopencm3/include
+CPPFLAGS    += -mthumb -mcpu=cortex-m3 -msoft-float -mfix-cortex-m3-ldrd
+CPPFLAGS    += -DSTM32F1 -DDISCOVERY_STLINK
+
+LDFLAGS      = -specs=nano.specs -specs=nosys.specs
+LDFLAGS     += -L../libopencm3/lib -lopencm3_stm32f1 -lnosys
+LDFLAGS     += -nostartfiles -lc  
+LDFLAGS     += -Wl,-Map=mapfile -Wl,-gc-sections -Wl,-T,rfskipper.ld
+LDFLAGS     += -Wl,--defsym,_stack=0x20005000 
+LDFLAGS     += -mthumb -mcpu=cortex-m3  
+	
 
 all:	rfskipper.bin
 
