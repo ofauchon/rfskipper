@@ -56,9 +56,16 @@ $ picocom --imap lfcrlf --omap crcrlf -b 57600 -c /dev/ttyUSB0
 [0x05]: 0x00 0b00000000
 ...
 
+# Dump RFM69 RF Frames
+10;RFDEBUG=ON;
+20;00;RFDEBUG=ON;
+20;01;DEBUG;Pulses=25;Pulses(uSec)=380,320,710,670,370,660,380,660,370,320,720,670,370,320,720,660,370,320,720,670,370,320,720,660,370;
+20;02;DEBUG;Pulses=25;Pulses(uSec)=380,320,720,660,370,670,370,670,370,320,710,670,370,320,720,670,370,320,720,660,370,330,710,680,360;
+
 ```
 
 # References 
 
 https://jeelabs.org/article/1649e/
+https://github.com/satoshinm/pill_serial
 
