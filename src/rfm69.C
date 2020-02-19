@@ -258,7 +258,7 @@ uint8_t RFM69::init(SPI_BASE o_spiBase, SPI_ChipSelect pf_chipSelect,
    _o_spi.setDff8bit();
    _o_spi.setClockPolarity0();
    _o_spi.setClockPhase1();
-   _o_spi.setBaudratePrescaler(SPI_CR1_BR_FPCLK_DIV_4);
+   _o_spi.setBaudratePrescaler(SPI_CR1_BR_FPCLK_DIV_16);
    _o_spi.setSendMsbFirst();
    _o_spi.enable();
 
