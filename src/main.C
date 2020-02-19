@@ -49,6 +49,8 @@ static void clock_setup() {
    rcc_periph_clock_enable(RCC_AFIO);
    rcc_periph_clock_enable(RCC_USART1);
 
+   rcc_periph_clock_enable(RCC_USB);
+   rcc_periph_reset_pulse(RST_USB);
 
 }
 

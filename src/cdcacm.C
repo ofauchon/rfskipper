@@ -25,6 +25,8 @@
  */
 
 #include "platform.h"
+#include "standard.h"
+
 #include "cdcacm.h"
 
 #include <libopencm3/cm3/nvic.h>
@@ -38,7 +40,7 @@
 
 usbd_device * usbdev;
 
-static int configured;
+static int configured=0	;
 
 
 static void cdcacm_set_modem_state(usbd_device *dev, int iface, bool dsr, bool dcd);
@@ -495,6 +497,8 @@ static void usbuart_usb_out_cb(int USBUSART, usbd_device *dev, uint8_t ep, int C
 		gpio_toggle(LED_PORT_UART, LED_UART);
 
 		// Send back to USB (Loop)
+
+		/*
 		char h[]="IN X Y:\r\n";
 		h[3]= '0' + (ep & 0xf);
 		h[5]= '0' + ( CDCACM_UART_ENDPOINT);
@@ -502,7 +506,7 @@ static void usbuart_usb_out_cb(int USBUSART, usbd_device *dev, uint8_t ep, int C
 
 		//printf("From callback EP:%d size %d :\r\n", CDCACM_UART_ENDPOINT, len);
 		usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, buf, len);
-
+*/
 
 }
 
@@ -591,7 +595,7 @@ static void cdcacm_set_modem_state(usbd_device *dev, int iface, bool dsr, bool d
 
 static void cdcacm_set_config(usbd_device *dev, uint16_t wValue)
 {
-	configured = wValue;
+	(void)(wValue);
 
 	/* Serial interface */
 	usbd_ep_setup(dev, 0x01, USB_ENDPOINT_ATTR_BULK,
@@ -670,9 +674,17 @@ void USB_ISR(void)
 	usbd_poll(usbdev);
 }
 
+void usbuart_enable(void){
+	configured=1;
+}
+
+void usbuart_disable(void){
+	configured=0;
+}
+
 
 void usbuart_write(uint8_t ep, const char *buf, uint8_t len){
-	if (configured)
-		usbd_ep_write_packet(usbdev, ep, buf, len);
-
+		if (configured){
+			usbd_ep_write_packet(usbdev, ep, buf, len);
+		}
 }

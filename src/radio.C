@@ -516,7 +516,7 @@ void setup() {
    timer3Init();
 
    // Usb Virual Uart Setup
-   cdcacm_init();
+   // FIXME cdcacm_init();
 
    // LED on BluePill F103 is PC13
    gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
@@ -541,9 +541,15 @@ void setup() {
    o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;
    for (int i_loop = 0; i_loop < 1024; i_loop++) {
+      if ((i_loop %10) ==0) {
+               gpio_toggle(GPIOC, GPIO13);
+      }
       i_rssiAverage += o_rfm69.readRSSI(false);
       msleep(10);
    }
+
+   usbuart_enable();
+
    i_rssiAverage /= 1024;
    o_usart.printf("Calibration result: Average RSSI=%d\n", i_rssiAverage);
 
@@ -584,8 +590,8 @@ void loop() {
    }
 
    if ((millis() & 1023) == 0) {
-      //int i_rssi = o_rfm69.readRSSI(false);
-     // o_usart.printf("RSSI=%d\n", i_rssi);
+      int i_rssi = o_rfm69.readRSSI(false);
+      o_usart.printf("RSSI=%d\n", i_rssi);
       gpio_toggle(GPIOC, GPIO13);
    }
 }
