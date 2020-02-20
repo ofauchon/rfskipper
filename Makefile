@@ -15,6 +15,9 @@ all:
 	$(Q)$(MAKE) $(MFLAGS) -C src
 
 clean:
+	$(Q)$(MAKE) $(MFLAGS) -C src $@
+
+realclean:
 	$(Q)$(MAKE) $(MFLAGS) TARGETS=$(MCU) -C libopencm3 $@
 	$(Q)$(MAKE) $(MFLAGS) -C src $@
 
