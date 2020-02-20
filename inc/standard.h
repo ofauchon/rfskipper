@@ -8,6 +8,9 @@
 #ifndef STANDARD_H_
 #define STANDARD_H_
 
+// Contains git repository version
+#include "version.h"
+
 #include <stdint.h>
 
 #include <libopencm3/cm3/cortex.h>

@@ -515,8 +515,6 @@ void setup() {
    // Init Timer3
    timer3Init();
 
-   // Usb Virual Uart Setup
-   // FIXME cdcacm_init();
 
    // LED on BluePill F103 is PC13
    gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,

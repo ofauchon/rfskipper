@@ -32,6 +32,8 @@
 #include "standard.h"
 #include "radio.H"
 #include "ring.H"
+#include "cdcacm.h"
+
 
 /*----------------------------------------------------------------------------*/
 USART o_usart;
@@ -88,6 +90,9 @@ extern void loop();
 int main() {
    clock_setup();
    systick_setup();
+
+   // Usb Virual Uart Setup
+   cdcacm_init();
 
    setup();
 

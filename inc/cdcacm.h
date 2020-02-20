@@ -30,6 +30,20 @@
 
 #define CDCACM_PACKET_SIZE 	32
 
+#define BOARD_IDENT       "RFSkipper RF Gateway, (Firmware " FIRMWARE_VERSION ")"
+
+#define USB_DRIVER      st_usbfs_v1_usb_driver
+#define USB_IRQ	        NVIC_USB_LP_CAN_RX0_IRQ
+#define USB_ISR	        usb_lp_can_rx0_isr
+/* Interrupt priorities.  Low numbers are high priority.
+ * For now USART2 preempts USB which may spin while buffer is drained.
+ */
+#define IRQ_PRI_USB		(2 << 4)
+#define IRQ_PRI_USBUSART	(1 << 4)
+#define IRQ_PRI_USBUSART_TIM	(3 << 4)
+#define IRQ_PRI_USB_VBUS	(14 << 4)
+
+
 extern usbd_device *usbdev;
 
 void cdcacm_init(void);

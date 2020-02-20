@@ -24,7 +24,6 @@
  * The device's unique id is used as the USB serial number string.
  */
 
-#include "platform.h"
 #include "standard.h"
 
 #include "cdcacm.h"
