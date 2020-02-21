@@ -216,8 +216,11 @@ int USART::printf(const char *pc_format, ...) {
 void USART::puts(const char *pc_string) {
    uint8_t u8_byte;
 
-   //usbuart_write(1, pc_string, strlen(pc_string));
-
+/*
+   if (strlen(pc_string)<32){
+      usbuart_write(1, pc_string, strlen(pc_string));
+   }
+*/
    while ((u8_byte = (uint8_t) *pc_string++) != 0) {
       if (u8_byte == '\n') {
          send('\r');

@@ -426,6 +426,9 @@ void usbuart_usb_out_cb(usbd_device *dev, uint8_t ep)
 	// Read usb packet data
 	char buf[CDCACM_PACKET_SIZE];
 	int len = usbd_ep_read_packet(dev, ep, buf, CDCACM_PACKET_SIZE);
+	char c[]= "I >"; 
+	c[1]='0' + (ep &0xf);
+	usbd_ep_write_packet(usbdev, 0x80 | ep, c, 3); // Send back datas
 	usbd_ep_write_packet(usbdev, 0x80 | ep, buf, len); // Send back datas
 }
 
@@ -575,8 +578,5 @@ void usbuart_disable(void)
 
 void usbuart_write(uint8_t ep, const char *buf, uint8_t len)
 {
-	if (configured)
-	{
 		usbd_ep_write_packet(usbdev, ep, buf, len);
-	}
 }
