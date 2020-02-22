@@ -32,10 +32,15 @@
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/scb.h>
-#include <libopencm3/stm32/usart.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include "ring.H"
+
+RING<60> o_usb1In;
+RING<60> o_usb2In;
+RING<60> o_usb3In;
 
 usbd_device *usbdev;
 
@@ -426,10 +431,18 @@ void usbuart_usb_out_cb(usbd_device *dev, uint8_t ep)
 	// Read usb packet data
 	char buf[CDCACM_PACKET_SIZE];
 	int len = usbd_ep_read_packet(dev, ep, buf, CDCACM_PACKET_SIZE);
-	char c[]= "I >"; 
-	c[1]='0' + (ep &0xf);
-	usbd_ep_write_packet(usbdev, 0x80 | ep, c, 3); // Send back datas
-	usbd_ep_write_packet(usbdev, 0x80 | ep, buf, len); // Send back datas
+	for (uint8_t i = 0; i < len; i++)
+	{
+		o_usb1In.write((uint8_t *)buf + i, 1);
+		if (buf[i] == '\n')
+		{
+			o_queue.put(20, 0);
+		}
+	}
+	//char c[]= "I >";
+	//c[1]='0' + (ep &0xf)
+	//usbd_ep_write_packet(usbdev, 0x80 | ep, c, 3); // Send back datas
+	//usbd_ep_write_packet(usbdev, 0x80 | ep, buf, len); // Send back datas
 }
 
 // When Host computer writes datas to usbuart
@@ -578,5 +591,8 @@ void usbuart_disable(void)
 
 void usbuart_write(uint8_t ep, const char *buf, uint8_t len)
 {
-		usbd_ep_write_packet(usbdev, ep, buf, len);
+	if (configured)
+	{
+			usbd_ep_write_packet(usbdev, ep, buf,len);
+	}
 }

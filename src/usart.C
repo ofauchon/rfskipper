@@ -10,8 +10,10 @@
 
 /*----------------------------------------------------------------------------*/
 
-inline void printchar(char **str, int c) {
-   if (str) {
+inline void printchar(char **str, int c)
+{
+   if (str)
+   {
       *(*str)++ = c;
    }
 }
@@ -21,10 +23,12 @@ inline void printchar(char **str, int c) {
 #define PAD_RIGHT 1
 #define PAD_ZERO 2
 
-static void prints(char **out, const char *string, int width, int pad) {
+static void prints(char **out, const char *string, int width, int pad)
+{
    register int padchar = ' ';
 
-   if (width > 0) {
+   if (width > 0)
+   {
       register int len = 0;
       register const char *ptr;
       for (ptr = string; *ptr; ++ptr)
@@ -36,15 +40,19 @@ static void prints(char **out, const char *string, int width, int pad) {
       if (pad & PAD_ZERO)
          padchar = '0';
    }
-   if (!(pad & PAD_RIGHT)) {
-      for (; width > 0; --width) {
+   if (!(pad & PAD_RIGHT))
+   {
+      for (; width > 0; --width)
+      {
          printchar(out, padchar);
       }
    }
-   for (; *string; ++string) {
+   for (; *string; ++string)
+   {
       printchar(out, *string);
    }
-   for (; width > 0; --width) {
+   for (; width > 0; --width)
+   {
       printchar(out, padchar);
    }
 }
@@ -54,20 +62,23 @@ static void prints(char **out, const char *string, int width, int pad) {
 #define PRINT_BUF_LEN 12
 
 static void printi(char **out, int i, int b, int sg, int width, int pad,
-                   int letbase) {
+                   int letbase)
+{
    char print_buf[PRINT_BUF_LEN];
    register char *s;
    register int t, neg = 0;
    register unsigned int u = i;
 
-   if (i == 0) {
+   if (i == 0)
+   {
       print_buf[0] = '0';
       print_buf[1] = '\0';
       prints(out, print_buf, width, pad);
       return;
    }
 
-   if (sg && b == 10 && i < 0) {
+   if (sg && b == 10 && i < 0)
+   {
       neg = 1;
       u = -i;
    }
@@ -75,20 +86,26 @@ static void printi(char **out, int i, int b, int sg, int width, int pad,
    s = print_buf + PRINT_BUF_LEN - 1;
    *s = '\0';
 
-   while (u) {
+   while (u)
+   {
       t = u % b;
-      if (t >= 10) {
+      if (t >= 10)
+      {
          t += letbase - '0' - 10;
       }
       *--s = t + '0';
       u /= b;
    }
 
-   if (neg) {
-      if (width && (pad & PAD_ZERO)) {
+   if (neg)
+   {
+      if (width && (pad & PAD_ZERO))
+      {
          printchar(out, '-');
          --width;
-      } else {
+      }
+      else
+      {
          *--s = '-';
       }
    }
@@ -98,7 +115,8 @@ static void printi(char **out, int i, int b, int sg, int width, int pad,
 
 /*----------------------------------------------------------------------------*/
 
-int print(char *pc_buffer, const char *format, va_list args) {
+int print(char *pc_buffer, const char *format, va_list args)
+{
    register int width, pad;
    register char **out;
    char *pc_end;
@@ -106,64 +124,80 @@ int print(char *pc_buffer, const char *format, va_list args) {
 
    pc_end = pc_buffer;
    out = &pc_end;
-   for (; *format != 0; ++format) {
-      if (*format == '%') {
+   for (; *format != 0; ++format)
+   {
+      if (*format == '%')
+      {
          ++format;
          width = pad = 0;
          if (*format == '\0')
             break;
          if (*format == '%')
             goto out;
-         if (*format == '-') {
+         if (*format == '-')
+         {
             ++format;
             pad = PAD_RIGHT;
          }
-         while (*format == '0') {
+         while (*format == '0')
+         {
             ++format;
             pad |= PAD_ZERO;
          }
-         for (; *format >= '0' && *format <= '9'; ++format) {
+         for (; *format >= '0' && *format <= '9'; ++format)
+         {
             width *= 10;
             width += *format - '0';
          }
-         if (*format == 's') {
-            register char *s = (char *) va_arg(args, char *);
+         if (*format == 's')
+         {
+            register char *s = (char *)va_arg(args, char *);
             prints(out, s ? s : "(null)", width, pad);
             continue;
          }
-         if (*format == 'd') {
+         if (*format == 'd')
+         {
             printi(out, va_arg(args, int), 10, 1, width, pad, 'a');
             continue;
          }
-         if (*format == 'x') {
+         if (*format == 'x')
+         {
             printi(out, va_arg(args, int), 16, 0, width, pad, 'a');
             continue;
          }
-         if (*format == 'X') {
+         if (*format == 'X')
+         {
             printi(out, va_arg(args, int), 16, 0, width, pad, 'A');
             continue;
          }
-         if (*format == 'u') {
+         if (*format == 'u')
+         {
             printi(out, va_arg(args, int), 10, 0, width, pad, 'a');
             continue;
          }
-         if (*format == 'b') {
+         if (*format == 'b')
+         {
             printi(out, va_arg(args, int), 2, 0, width, pad, 'a');
             continue;
          }
-         if (*format == 'c') {
+         if (*format == 'c')
+         {
             /* char are converted to int then pushed on the stack */
-            scr[0] = (char) va_arg(args, int);
+            scr[0] = (char)va_arg(args, int);
             scr[1] = 0;
             prints(out, scr, width, pad);
             continue;
          }
-      } else {
-         out: printchar(out, *format);
+      }
+      else
+      {
+      out:
+         printchar(out, *format);
       }
    }
 
-   if (out) {
+   if (out)
+   {
       **out = 0;
    }
 
@@ -185,7 +219,8 @@ int print(char *pc_buffer, const char *format, va_list args) {
 void USART::init(USART_BASE o_usart, uint32_t u32_baudRate,
                  uint32_t u32_dataBits, uint32_t u32_parity,
                  uint32_t u32_stopBits, uint32_t u32_mode,
-                 uint32_t u32_flowControl) {
+                 uint32_t u32_flowControl)
+{
    _o_usart = o_usart;
 
    setBaudRate(u32_baudRate);
@@ -198,7 +233,8 @@ void USART::init(USART_BASE o_usart, uint32_t u32_baudRate,
 
 /*----------------------------------------------------------------------------*/
 
-int USART::printf(const char *pc_format, ...) {
+int USART::printf(const char *pc_format, ...)
+{
    char pc_message[128];
    va_list s_args;
    int i_length;
@@ -213,19 +249,20 @@ int USART::printf(const char *pc_format, ...) {
 
 /*----------------------------------------------------------------------------*/
 
-void USART::puts(const char *pc_string) {
+void USART::puts(const char *pc_string)
+{
    uint8_t u8_byte;
 
-/*
-   if (strlen(pc_string)<32){
-      usbuart_write(1, pc_string, strlen(pc_string));
-   }
-*/
-   while ((u8_byte = (uint8_t) *pc_string++) != 0) {
-      if (u8_byte == '\n') {
+
+   while ((u8_byte = (uint8_t)*pc_string) != 0)
+   {
+      if (u8_byte == '\n')
+      {
          send('\r');
       }
       send(u8_byte);
+      usbuart_write(1, pc_string,1);
+      pc_string++;
    }
 }
 

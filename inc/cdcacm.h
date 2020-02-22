@@ -27,6 +27,8 @@
 #define __CDCACM_H
 
 #include <libopencm3/usb/usbd.h>
+#include "eventqueue.H"
+
 
 #define CDCACM_PACKET_SIZE 	32
 
@@ -54,5 +56,9 @@ int cdcacm_get_dtr(void);
 void usbuart_write(uint8_t ep, const char *buf, uint8_t len);
 void usbuart_enable(void);
 void usbuart_disable(void);
+
+extern EventQueue o_queue;
+
+
 
 #endif

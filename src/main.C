@@ -27,21 +27,19 @@
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/cm3/nvic.h>
 
-
 //#include "platform.h"
 #include "standard.h"
 #include "radio.H"
 #include "ring.H"
 #include "cdcacm.h"
 
-
 /*----------------------------------------------------------------------------*/
 USART o_usart;
 
-
 /*----------------------------------------------------------------------------*/
 
-static void clock_setup() {
+static void clock_setup()
+{
    rcc_clock_setup_in_hse_8mhz_out_72mhz();
 
    /* Enable clocks for GPIO port A/C for LED and USART1. */
@@ -53,12 +51,12 @@ static void clock_setup() {
 
    rcc_periph_clock_enable(RCC_USB);
    rcc_periph_reset_pulse(RST_USB);
-
 }
 
 /*----------------------------------------------------------------------------*/
 
-static void systick_setup() {
+static void systick_setup()
+{
    /* 72MHz / 8 => 9000000 counts per second. */
    systick_set_clocksource(STK_CSR_CLKSOURCE_AHB_DIV8);
 
@@ -75,9 +73,11 @@ static void systick_setup() {
 /*----------------------------------------------------------------------------*/
 
 /* sleep for delay milliseconds */
-extern "C" void msleep(uint32_t u32_delay) {
+extern "C" void msleep(uint32_t u32_delay)
+{
    uint32_t u32_wake = u32_systemMillis + u32_delay;
-   while (u32_wake > u32_systemMillis) {
+   while (u32_wake > u32_systemMillis)
+   {
       asm("wfi");
    }
 }
@@ -87,16 +87,21 @@ extern "C" void msleep(uint32_t u32_delay) {
 extern void setup();
 extern void loop();
 
-int main() {
+int main()
+{
    clock_setup();
    systick_setup();
 
    // Usb Virual Uart Setup
    cdcacm_init();
+   msleep(2000);
+
+   usbuart_enable();
 
    setup();
 
-   while (true) {
+   while (true)
+   {
       loop();
    }
    // never returns
