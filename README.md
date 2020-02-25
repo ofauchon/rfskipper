@@ -1,3 +1,5 @@
+You'll find all the documentation on the [RFSkipper Wiki](https://github.com/ofauchon/rfskipper-docs/wiki)
+
 # Requirements:
  
   - Bluepill board
