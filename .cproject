@@ -82,7 +82,6 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="eeprom.C|usart-old.C" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -167,7 +166,6 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="eeprom.C|usart-old.C" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
-						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="startup"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
