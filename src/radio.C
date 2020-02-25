@@ -123,7 +123,7 @@ int __attribute__ ((noinline)) testAndSetState(volatile Rfm69State &e_state,
 
 /*----------------------------------------------------------------------------*/
 
-extern "C" void SysTick_Handler() {
+extern "C" void sys_tick_handler() {
    ++u32_systemMillis;
 
    if (e_state == RECEIVING && u32_systemMillis >= u32_txTimeout) {
@@ -135,7 +135,7 @@ extern "C" void SysTick_Handler() {
 
 /*----------------------------------------------------------------------------*/
 
-extern "C" void USART1_IRQHandler(void) {
+extern "C" void usart1_isr(void) {
    /* Check if we were called because of RXNE. */
    if (((USART_CR1(USART1) & USART_CR1_RXNEIE) != 0)
          && ((USART_SR(USART1) & USART_SR_RXNE) != 0)) {
@@ -277,7 +277,7 @@ void timer3SetupOutputCompare(uint16_t u16_autoReload, uint16_t u16_prescaler) {
 /*----------------------------------------------------------------------------*/
 
 
-extern "C" void TIM3_IRQHandler(void) {
+extern "C" void tim3_isr(void) {
    static uint16_t u16_prevTimer;
    uint16_t u16_timer;
    uint16_t u16_pulse;
