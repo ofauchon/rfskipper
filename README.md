@@ -1,20 +1,11 @@
 You'll find all the documentation on the [RFSkipper Wiki](https://github.com/ofauchon/rfskipper-docs/wiki)
 
-# Requirements:
- 
-  - Bluepill board
-  - Stlink v2 flasher
-  - make
-  - arm toolchain
-  - openocd
-  
-# Build and flash
+- Board assembly
+- Build instructions
+- Serial access and commands
+- Developement environnements
+- Instructions for contributing to the project
 
-```
-git clone git@github.com:ofauchon/rfskipper.git
-make 
-make flash
-```
 
 # Connect to serial
 
