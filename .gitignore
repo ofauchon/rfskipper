@@ -1,11 +1,2 @@
-**/*.d
-**/*.o
-**/*.bin
-**/*.elf
-**/mapfile
-**/.vscode
-src/version.h
-.settings/
-Debug/
-STM32F103C8T6-0.xml
-
+.pio
+.vscode

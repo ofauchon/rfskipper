@@ -27,9 +27,9 @@
 #include <libopencm3/cm3/systick.h>
 #include <libopencm3/cm3/nvic.h>
 
-#include "standard.h"
-#include "radio.H"
-#include "ring.H"
+#include "standard.hpp"
+#include "radio.hpp"
+#include "ring.hpp"
 
 /*----------------------------------------------------------------------------*/
 

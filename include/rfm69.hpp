@@ -4,10 +4,10 @@
  * Includes
  */
 
-#include "standard.h"
-#include "spi.H"
-#include "usart.H"
-#include "rfm69_registers.h"
+#include "standard.hpp"
+#include "spi.hpp"
+#include "usart.hpp"
+#include "rfm69_registers.hpp"
 
 /*----------------------------------------------------------------------------*/
 

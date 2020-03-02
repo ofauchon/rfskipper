@@ -1,4 +1,4 @@
-
+#ifdef EXPERIMENTAL_WIP
 #include <libopencm3/stm32/flash.h>
 
 #include "eeprom.H"
@@ -598,3 +598,4 @@ static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data)
   */
 
 /******************* (C) COPYRIGHT 2009 STMicroelectronics *****END OF FILE****/
+#endif 

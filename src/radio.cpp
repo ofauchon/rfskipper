@@ -10,14 +10,14 @@
 
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/cortex.h>
-#include <plugin.H>
+#include <plugin.hpp>
 
-#include "radio.H"
-#include "standard.h"
-#include "rfm69.H"
-#include "usart.H"
-#include "ring.H"
-#include "eventQueue.H"
+#include "radio.hpp"
+#include "standard.hpp"
+#include "rfm69.hpp"
+#include "usart.hpp"
+#include "ring.hpp"
+#include "eventqueue.hpp"
 
 /*----------------------------------------------------------------------------*/
 

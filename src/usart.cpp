@@ -5,7 +5,7 @@
 
 #include <libopencm3/stm32/rcc.h>
 
-#include "usart.H"
+#include "usart.hpp"
 
 /*----------------------------------------------------------------------------*/
 

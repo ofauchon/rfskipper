@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ring.H"
+#include "ring.hpp"
 
 
 /*----------------------------------------------------------------------------*/

@@ -6,14 +6,14 @@
 #include <stdint.h>
 
 #ifndef _WIN32
-#include "radio.H"
+#include "radio.hpp"
 #else
 #include "regression.H"
 #endif
 
 /*----------------------------------------------------------------------------*/
 
-// unit sample is 10µs
+// unit sample is 10ï¿½s
 #define RAWSIGNAL_SAMPLE_RATE           10
 // Maximum number of pulses that is received in one go.
 #define RAW_BUFFER_SIZE                640

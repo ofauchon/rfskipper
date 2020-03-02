@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "standard.h"
-#include "eventQueue.H"
+#include "standard.hpp"
+#include "eventqueue.hpp"
 
 /*----------------------------------------------------------------------------*/
 

@@ -7,12 +7,12 @@
 
 #include <stdlib.h>
 
-#include "plugin.H"
-#include "rfm69.H"
+#include "plugin.hpp"
+#include "rfm69.hpp"
 
 /*----------------------------------------------------------------------------*/
 
-#define Somfy_TLength               63   // pulse length in 10µs
+#define Somfy_TLength               63   // pulse length in 10ï¿½s
 #define Somfy_lT     (1*Somfy_TLength)/2 // approx. in between 0T and 1T
 #define Somfy_mT     (3*Somfy_TLength)/2 // approx. in between 1T and 2T
 #define Somfy_hT     (5*Somfy_TLength)/2 // approx. in between 2T and 3T
