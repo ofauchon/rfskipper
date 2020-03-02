@@ -527,7 +527,10 @@ void setup() {
 //   o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;
    for (int i_loop = 0; i_loop < 1024; i_loop++) {
-      i_rssiAverage += o_rfm69.readRSSI(false);
+      if ((i_loop %10) ==0){
+            gpio_toggle(GPIOC, GPIO13);
+      }
+            i_rssiAverage += o_rfm69.readRSSI(false);
       msleep(10);
    }
    i_rssiAverage /= 1024;
