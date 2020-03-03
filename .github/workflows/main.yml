@@ -3,9 +3,13 @@ on:
   push:
     branches:
       - tools_renderpulses
+  pull_request:
+    branches:
+      - tools_renderpulses
+
 jobs:
   main:
-    name: Try to Build 
+    name: BuildOnPushPull 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
