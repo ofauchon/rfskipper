@@ -1,12 +1,11 @@
-name: Test CI
-on: 
+name: Continuous Build
+on:
   push:
     branches:
       - tools_renderpulses
-
 jobs:
   main:
-    name: Main
+    name: Try to Build 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
