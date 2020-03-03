@@ -1,86 +1,211 @@
 <!DOCTYPE html>
 <html>
+
+<head>
+    <script src="./svg-pan-zoom.js"></script>
+    <script src="./signal.js"></script>
+
+</head>
+
 <body>
 
-    <h2>RFSkipper Pulses Display</h2>
     <p align=center>
-        <textarea id="text1" style="width:400px;height:300px;border:1px solid;">20;11;DEBUG;Pulses=121;Pulses(uSec)=490,480,500,480,490,480,500,480,490,480,500,480,500,960,990,480,500,950,510;</textarea><br>
-        <button type="button" onclick="myFunction()">Generer</button>
-        <div id="svg54583"></div>
+        <h2 align=center>RFSkipper Pulses Display</h2>
+
+        <div id="div1"
+            style="width:100%;height:150px;border-width:1px;border-style:dotted;border-color:black;overflow-x: auto">
+            <svg id="svg1" xmlns="http://www.w3.org/2000/svg" version="1.1"
+                style="width:100%;height:100%;background-color:lightgray"></svg>
+        </div>
+        Trace<br>
+
+        <textarea id="text1"
+            style="width:100%;height:100px;font-size: 10px">20;11;DEBUG;Pulses=121;Pulses(uSec)=490,480,500,480,490,480,500,480,490,480,500,480,500,960,990,480,500,950,510;</textarea><br>
+        Console</br>
+        <textarea id="console1"
+            style="width:100%;height:100px;border:1px solid;font-size: 10px">Console logs: \n</textarea><br>
+
+        <button type="button" onclick="clickGenerate()">Generer</button>
+
     </p>
+
+
     <script>
-        function myFunction() {
-            //var s = '20;19;DEBUG;Pulses=121;Pulses(uSec)=500,470,510,470,500,470,510,470,500,470,510,470,510,460,510,470,510,460,510,470,510,460,510,470,510,470,500,470,510,470,500,470,510,460,510,470,510,470,500,470,510,470,500,470,510,470,500,960,990,960,510,460,510,470,1000,460,510,960,500,470,1000,950,510,470,990,960,990,470,510,950,1000,470,510,950,990,960,990,960,510,470,500,470,510,470,990,960,510,460,1000,470,500,960,990,960,990,960,500,470,510,470,500,480,500,470,510,470,500,470,500,480,990,470,510,950,1000,960,500,470,990,470,510;';
-
-            var s = document.getElementById('text1').value;
-
-            var fields = s.match(/.*\(uSec\)=(.*);/);
-            console.log(fields);
-            var pulses = fields[1].split(/,/);
-            console.log(pulses);
-
-            const svg1 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            // set width and height
-            imageHeight = 100;
-            imageWidth = 1000;
-
-            svg1.setAttribute("width", "1000");
-            svg1.setAttribute("height", "100");
-
-            posX = 0;
-            pix_per_ms = 0.01;
-            oldH = imageHeight * 0.9;
-            totalWidth = 0;
-
-            for (i = 0; i < pulses.length; i++) {
-                console.log("pulse #" + i + " len:" + pulses[i] + "ms");
 
 
-                newH = imageHeight * 0.1;
+
+
+        /* GLOBAL VARIABLES */
+        var pulses = [];
+        var pulses2 = [];
+        var deco = [];
+        var posDec;
+
+
+
+
+        /*
+        * This ons logs on html console
+        */
+        function console1(pLog) {
+            document.getElementById('console1').value = document.getElementById('console1').value + pLog + "\n";
+        }
+
+
+
+        /*
+        * Read Pulse Debug trace and return a Uint16Array with the pulses
+        * nb: Function returns null on decoding error 
+        */
+        function decodeStringPulses(pString) {
+            //var s = document.getElementById('text1').value;
+            s = "20;FD;DEBUG;Pulses=301;Pulses(uSec)=210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,410,630,630,210,200,210,210,420,410,210,200,420,420,210,210,210,200,210,210,210,200,210,210,210,200,210,210,420,410,220,200,210,210,210,200,210,210,420,200,210,210,210,410,210,210,210,210,210,200,210,210,210,200,210,210,420,200,220,410,210,210,410,210,210,200,210,210,210,200,220,410,420,210,210,410,420,200,210,420,410,420,210,210,420,200,210,210,210,410,210,200,420,420,210,210,210,200,420,410,210,210,210,200,420,420,210,200,220,200,420,200,220,410,210,200,420,210,210,410,420,210,210,410,420,410,210,210,420,410,420,210,210,200,210,420,210,200,210,210,210,200,210,210,210,210,210,200,220,200,210,200,220,200,420,410,220,200,210,210,210,200,220,200,210,200,220,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,210,210,420,210,210,410,210,210,410,420,210,200,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,200,210,210,210,210,200,220,200,420,410,210,210,210,200,420,420,420,410,210,200,210,210,420,410,210,210,420,200,220,200,210,200,220,200,210;";
+            document.getElementById('text1').value = s;
+            t1 = s.match(/.*\(uSec\)=(.*);/);
+            if (t1 == null) {
+                alert("decodeStringPulses: Input string should contain 'Pulses(uSec)='");
+                return null;
+            }
+
+            t2 = t1[1].split(/,/);
+            if (t2.length < 1) {
+                alert("decodeStringPulses: Input string should contains at least one pulse.");
+                return null;
+            }
+
+            var out = new Uint16Array(t2.length);
+            console1("decodeStringPulses: " + t2.length + " tokens found.")
+            for (var i = 0; i < t2.length; i++) {
+                out[i] = t2[i];
+            }
+            return out;
+        }
+
+
+
+
+        /*
+        *  Draw the signal from pulses 
+        */
+        function drawPulse(pPulses) {
+            console1("*** drawPulse")
+
+            sHeight = 150
+            sWidth = 5000
+
+            var totalDuration = 0, totalWidth = 0, posX = 0, newH = 0, oldH = 0;
+
+            // Get the svg and zero it
+            var svg1 = document.getElementById("svg1")
+            svg1.innerHTML = '';
+
+            // Resize the svg to 100% of 
+            // Get total trace duration
+            var totalDuration = 0;
+            for (i = 0; i < pPulses.length; i++) {
+                totalDuration += pPulses[i];
+            }
+            xfactor = sWidth / totalDuration;
+
+
+            oldH = sHeight * 0.8;
+            // Iterate the pulse array and draw lines in SVG
+            for (i = 0; i < pPulses.length; i++) {
+
+
                 if (i % 2) {
-                    newH = imageHeight * 0.9;
+                    newH = sHeight * 0.8;
+                } else {
+                    newH = sHeight * 0.2;
                 }
 
-                wi = (pulses[i] * pix_per_ms)
+                wi = pPulses[i]
                 totalWidth += wi;
 
                 var newLineH = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                //newLine.setAttribute('id', 'line2');
-                newLineH.setAttribute('x1', posX);
+                newLineH.setAttribute('x1', posX * xfactor);
                 newLineH.setAttribute('y1', newH);
-                newLineH.setAttribute('x2', posX + wi);
+                newLineH.setAttribute('x2', (posX + wi) * xfactor);
                 newLineH.setAttribute('y2', newH);
                 newLineH.setAttribute("stroke", "black");
                 svg1.appendChild(newLineH);
-                console.log("- " + posX + "x" + newH + "x" + (posX + wi) + "x" + newH);
 
+                var newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                newText.setAttribute('x', posX * xfactor);
+                newText.setAttribute('y', newH);
+                newText.setAttribute('fill', 'blue');
+                newText.setAttribute('font-size', "6px");
+                newText.textContent = i + ":" + wi;
+                svg1.appendChild(newText);
 
                 posX += wi;
 
                 var newLineV = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                //newLine.setAttribute('id', 'line2');
-                newLineV.setAttribute('x1', posX);
+                newLineV.setAttribute('x1', posX * xfactor);
                 newLineV.setAttribute('y1', oldH);
-                newLineV.setAttribute('x2', posX);
+                newLineV.setAttribute('x2', posX * xfactor);
                 newLineV.setAttribute('y2', newH);
                 newLineV.setAttribute("stroke", "red");
                 svg1.appendChild(newLineV);
-                console.log("| " + posX + "x" + oldH + "x" + posX + "x" + newH);
-
                 oldH = newH;
 
-
-
             }
-            svg1.setAttribute("width", totalWidth);
+
+            window.zoomTiger = svgPanZoom('#svg1', {
+                zoomEnabled: true,
+                controlIconsEnabled: true,
+            });
+
+        }
 
 
 
-            // attach container to document
-            document.getElementById("svg54583").appendChild(svg1);
+        function decodeOregonV3(pPulses) {
+
+            var pos = 0;
+            var dec1 = decodeManchester(pPulses, false, false, 300);
+
+            return dec1;
+
+        }
+
+
+        /* -------------------------------------------------------------------------------- */
+
+        function clickGenerate() {
+
+            //            var sample = '20;14;DEBUG;Pulses=221;Pulses(uSec)=490,480,500,480,500,480,490,480,490,490,490,480,490,490,490,480,500,480,500,470,500,480,490,480,500,480,490,480,500,480,490,480,500,480,500,470,500,480,490,490,490,480,500,470,500,480,500,960,990,960,500,480,500,470,990,480,490,970,500,480,490,480,500,470,500,480,980,970,990,470,500,960,990,480,500,960,990,960,990,960,500,480,490,480,500,480,980,970,980,480,500,480,490,970,990,960,990,960,500,480,500,470,500,480,490,480,500,480,490,480,500,480,500,470,500,480,500,470,990,960,500,480,500,480,490,480,980,970,500,470,990,480,500,960,500,480,970,970,990,470,500,480,490,480,500,960,500,480,500,470,500,480,500,480,980,970,500,470,500,480,490,480,500,480,490,480,500,480,500,470,500,480,500,470,500,480,500,470,500,480,500,480,490,480,500,470,510,470,500,470,500,480,500,480,490,480,990,470,500,970,980,970,990,470,500,960,500,480,500,470,500,480,990,470,500,480,500,960,500,480,490;';
+            //var sample = '20;07;DEBUG;Pulses=123;Pulses(uSec)=500,470,500,470,510,470,500,480,500,470,500,480,500,470,500,480,500,470,500,480,500,480,490,480,500,470,510,470,500,470,510,470,500,480,490,480,500,480,500,470,500,470,510,470,500,480,500,960,990,960,500,480,500,470,990,470,500,960,1000,470,500,960,500,480,990,960,990,470,500,960,990,470,510,960,990,960,990,960,500,470,510,470,500,480,980,480,500,960,990,960,990,960,990,480,500,960,500,470,510,470,500,480,490,480,500,470,510,470,500,470,990,480,500,960,500,480,500,470,990,960,500,480,500;'
+
+
+            //document.getElementById('text1').value = sample;
+
+            // Clear console
+            document.getElementById('console1').value = "";
+            var s = document.getElementById('text1').value;
+            var pulses = decodeStringPulses(s);
+
+            if (pulses == null) {
+                console1("Fatal: pulses is null (decoding error?)");
+            }
+            console1("INFO: Trace has " + pulses.length + " pulses")
+            drawPulse(pulses);
+
+            var res = decodeOregonV3(pulses);
+            console1("decode:" + toHexString(res));
+
+            var u32_deviceId = readNibble(res, 0, 3);
+            var u8_frameType = readNibble(res, 3, 1);
+            var i_flag = readNibble(res, 7, 1);
+            var i_power = (readNibble(res, 8, 2) << 4) + readNibble(res, 6, 1);
+            console1("ID=" + u32_deviceId.toString(16) + ";POWER=" + i_power + "FLAG=" + i_flag);
 
 
         }
+
+
+
+
     </script>
 
 </body>
