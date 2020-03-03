@@ -1,3 +1,5 @@
+![CI](https://github.com/ofauchon/rfskipper/workflows/CI/badge.svg)
+
 You'll find all the documentation on the [RFSkipper Wiki](https://github.com/ofauchon/rfskipper-docs/wiki)
 
 - Board assembly
