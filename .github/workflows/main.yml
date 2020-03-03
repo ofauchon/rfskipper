@@ -1,4 +1,4 @@
-name: AUTOBUILDER
+name: CI
 
 on: [push]
 
