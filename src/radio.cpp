@@ -482,7 +482,7 @@ void sendRfStop() {
  * https://acassis.wordpress.com/2016/04/19/getting-started-with-rfm69/
  */
 void setup() {
-   uint8_t u8_version;
+   //uint8_t u8_version;
 
    o_queue.init();
 
@@ -522,7 +522,7 @@ void setup() {
    o_rfm69.setMode(RFM69_MODE_RX);
 
    o_rfm69.setRssiThreshold(-127);
-   u8_version = o_rfm69.getVersion();
+//   u8_version = o_rfm69.getVersion();
 //   o_usart.printf("RFM69 version %d-%d\n", u8_version >> 4, u8_version & 0x0f);
 //   o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;

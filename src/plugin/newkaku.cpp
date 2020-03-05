@@ -18,7 +18,7 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
    uint32_t u32_bitStream;
    uint16_t *pu16_pulse;
-   bool b_dimPresent;
+   //bool b_dimPresent;
    int i_pulses;
    uint16_t p0;
    uint16_t p1;
@@ -35,7 +35,7 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
    }
 
    i = 2;     // skip start bit
-   b_dimPresent = false;
+   //b_dimPresent = false;
    u32_bitStream = i_dim = 0;
    pu16_pulse = &ps_rawSignal->pu16_pulses[2];
 
@@ -54,7 +54,7 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
          i_bit = 1; // T,4T,T,T
       } else if (p0 < NewKAKU_mT && p1 < NewKAKU_mT && p2 < NewKAKU_mT
             && p3 < NewKAKU_mT) {  // T,T,T,T should be on i=111 (bit 28)
-         b_dimPresent = true;
+         //b_dimPresent = true;
          if (i_pulses != NewKAKUdim_RawSignalLength) { // dim set but no dim bits present => invalid signal
             return false;
          }
