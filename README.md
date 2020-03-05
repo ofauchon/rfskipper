@@ -1,4 +1,4 @@
-![CI](https://github.com/ofauchon/rfskipper/workflows/CI/badge.svg)
+![CI](https://github.com/ofauchon/rfskipper/workflows/build/badge.svg)
 
 You'll find all the documentation on the [RFSkipper Wiki](https://github.com/ofauchon/rfskipper-docs/wiki)
 
