@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 
 #include "plugin.hpp"
@@ -132,7 +133,6 @@ bool plugin048Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
    uint16_t u16_pulses;
    uint8_t pu8_rawSignal[64];
    bool b_clockAligned;
-   int i_code;
    int i;
 
    // check number of pulses and start pulse which must be short
@@ -167,7 +167,7 @@ bool plugin048Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
    u16_pulses -= 4;
    // ==========================================================================
 
-   i_code = decodeManchesterLSB(pu16_pulses, u16_pulses, pu8_rawSignal,
+   decodeManchesterLSB(pu16_pulses, u16_pulses, pu8_rawSignal,
          sizeof(pu8_rawSignal), 1, b_clockAligned);
 
    //===========================================================================
