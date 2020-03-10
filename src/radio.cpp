@@ -10,7 +10,6 @@
 
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/cm3/cortex.h>
-#include <plugin.hpp>
 
 #include "radio.hpp"
 #include "standard.hpp"
@@ -18,6 +17,7 @@
 #include "usart.hpp"
 #include "ring.hpp"
 #include "eventqueue.hpp"
+#include "plugin.hpp"
 
 /*----------------------------------------------------------------------------*/
 
@@ -35,6 +35,12 @@
 
 #define COMMAND_LINE_SIZE               60
 
+#define LED_IDLE                         0
+#define LED_START_BLINK                  1
+#define LED_ON                           2
+#define LED_OFF                          3
+
+
 /*----------------------------------------------------------------------------*/
 
 typedef enum _Rfm69State {
@@ -48,9 +54,10 @@ namespace {
    RING<60> o_usartOut;
    EventQueue o_queue;
    bool b_rfDebug = false;
-   volatile uint32_t u32_txTimeout;
+   volatile uint32_t u32_txTimeout = 0;
    volatile Rfm69State e_state = IDLE;
    RawSignal s_rawSignal;
+   uint8_t u8_ledState;
 }
 
 // global variables accessed from the plugins
@@ -126,7 +133,13 @@ int __attribute__ ((noinline)) testAndSetState(volatile Rfm69State &e_state,
 extern "C" void sys_tick_handler() {
    ++u32_systemMillis;
 
-   if (e_state == RECEIVING && u32_systemMillis >= u32_txTimeout) {
+   if (e_state == RECEIVING && u32_txTimeout != 0
+         && u32_systemMillis >= u32_txTimeout) {
+      u32_txTimeout = 0;
+
+      timer_ic_disable(TIM3, TIM_IC3);
+      timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
+
       if (testAndSetState(e_state, RECEIVING, PROCESSING) == 0) {
          o_queue.put(EVENT_RF_STOP_IN, 0);
       }
@@ -180,22 +193,22 @@ void rfm69Reset(void) {
 void timer3Init() {
    /* Enable TIM3 clock. */
    rcc_periph_clock_enable(RCC_TIM3);
-}
 
-/*----------------------------------------------------------------------------*/
-
-void timer3SetupInputCapture(uint16_t u16_autoReload, uint16_t u16_prescaler) {
    /* Reset TIM3 peripheral to defaults. */
    rcc_periph_reset_pulse(RST_TIM3);
 
    /* Enable TIM3 interrupt. */
    nvic_enable_irq(NVIC_TIM3_IRQ);
+}
 
+/*----------------------------------------------------------------------------*/
+
+void timer3SetupInputCapture(uint16_t u16_autoReload, uint16_t u16_prescaler) {
    gpio_set_mode(GPIO_BANK_TIM3_CH3, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT,
          GPIO_TIM3_CH3);
 
    /* Timer global mode:
-    * - No divider (72Mhz)
+    * - Internal clock with no divider (72Mhz)
     * - Alignment edge
     * - Direction up
     * (These are actually default values after reset above, so this call
@@ -203,41 +216,40 @@ void timer3SetupInputCapture(uint16_t u16_autoReload, uint16_t u16_prescaler) {
     */
    timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
 
-   /*
-    * Please take note that the clock source for STM32 timers
-    * might not be the raw APB1/APB2 clocks.  In various conditions they
-    * are doubled.  See the Reference Manual for full details!
-    * In our case, TIM2 on APB1 is running at double frequency, so this
-    * sets the prescaler to have the timer run at 5kHz
-    */
+   // The timer clock is prescaled by the 16 bit scale value plus 1
    timer_set_prescaler(TIM3, u16_prescaler);
-   /* count full range, as we'll update compare value continuously */
+   // Specify the timer period in the auto-reload register
    timer_set_period(TIM3, u16_autoReload);
 //   timer_set_clock_division(TIM3, TIM_CR1_CKD_CK_INT);
 //   timer_direction_up(TIM3);
 
-   /* Disable preload. */
+   /*
+    *  This causes the counter to be loaded immediately with a new count value
+    *  when the auto-reload register is written, so that the new value becomes
+    *  effective for the current count cycle rather than for the cycle following
+    *  an update event.
+    */
    timer_disable_preload(TIM3);
+   // Enable the Timer to run continuously
    timer_continuous_mode(TIM3);
 
    /*
     * TIM3 configuration: Input Capture mode
     * The external signal is connected to TIM3 CH3 pin (PB.00)
-    * The Rising edge is used as active edge,
-    * The TIM3 CCR2 is used to compute the frequency value
+    * The Rising edge is used as active edge
     */
    timer_ic_set_input(TIM3, TIM_IC3, TIM_IC_IN_TI3);
    timer_ic_set_polarity(TIM3, TIM_IC3, TIM_IC_RISING);
    timer_ic_set_prescaler(TIM3, TIM_IC3, TIM_IC_PSC_OFF);
    timer_ic_set_filter(TIM3, TIM_IC3, TIM_IC_OFF);
 
-   timer_clear_flag(TIM3, TIM_SR_CC3IF);
+   timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
    timer_ic_enable(TIM3, TIM_IC3);
 
-   // Enable Timer 3 Channel 3 compare interrupt to recalculate compare values
+   // Enable Timer 3 Channel 3 compare interrupt
    timer_enable_irq(TIM3, TIM_DIER_CC3IE);
 
-   /* Counter enable. */
+   // Enable Timer 3 counter
    timer_enable_counter(TIM3);
 }
 
@@ -247,27 +259,30 @@ void timer3SetupOutputCompare(uint16_t u16_autoReload, uint16_t u16_prescaler) {
    /* Reset TIM3 peripheral to defaults. */
    rcc_periph_reset_pulse(RST_TIM3);
 
-   /* Enable TIM3 interrupt. */
-   nvic_enable_irq(NVIC_TIM3_IRQ);
-
    gpio_set_mode(GPIO_BANK_TIM3_CH3, GPIO_MODE_OUTPUT_50_MHZ,
    GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_TIM3_CH3);
 
    timer_set_prescaler(TIM3, 720);
    timer_set_period(TIM3, u16_autoReload);
 
-   /* Disable preload. */
+   /*
+    *  This causes the counter to be loaded immediately with a new count value
+    *  when the auto-reload register is written, so that the new value becomes
+    *  effective for the current count cycle rather than for the cycle following
+    *  an update event.Disable preload.
+    */
    timer_disable_preload(TIM3);
+   // Enable the Timer to run continuously
    timer_continuous_mode(TIM3);
 
 //   timer_disable_oc_output(TIM3, TIM_OC1 | TIM_OC2 | TIM_OC4);
-   timer_clear_flag(TIM3, TIM_SR_CC3IF);
+   timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
    timer_enable_oc_output(TIM3, TIM_OC3);
 
    timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
    timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_TOGGLE);
 
-   // Enable Timer 3 Channel 3 compare interrupt to recalculate compare values
+   // Enable Timer 3 Channel 3 compare interrupt
    timer_enable_irq(TIM3, TIM_DIER_CC3IE);
 
    /* Counter enable. */
@@ -281,37 +296,41 @@ extern "C" void tim3_isr(void) {
    static uint16_t u16_prevTimer;
    uint16_t u16_timer;
    uint16_t u16_pulse;
+   bool b_startNewFrame;
 
    if (timer_get_flag(TIM3, TIM_SR_CC3IF) != 0) {
       if (e_state == LISTENING) {
          e_state = RECEIVING;
       }
       if (e_state == RECEIVING) {
+         // read the value of the counter on the active transition AND
+         // clear the CC3IF flag
+         u16_timer = timer_get_counter(TIM3);
+         b_startNewFrame = s_rawSignal.u32_startTime == 0;
+
          if (gpio_get(GPIO_BANK_TIM3_CH3, GPIO_TIM3_CH3) != 0) {
             timer_ic_set_polarity(TIM3, TIM_IC3, TIM_IC_FALLING);
-            u32_txTimeout = millis() + SIGNAL_TIMEOUT;
+            if (b_startNewFrame) {
+               s_rawSignal.u32_startTime = millis();
+            }
          } else {
             timer_ic_set_polarity(TIM3, TIM_IC3, TIM_IC_RISING);
+            u32_txTimeout = millis() + SIGNAL_TIMEOUT;
          }
 
-         if (s_rawSignal.u16_pulses >= RAW_BUFFER_SIZE) {
-            timer_clear_flag(TIM3, TIM_SR_CC3IF);
-            timer_ic_disable(TIM3, TIM_IC3);
-            timer_disable_counter(TIM3);
-            return;
-         }
-
-         u16_timer = timer_get_counter(TIM3);
-         if (s_rawSignal.u32_startTime == 0) {
-            s_rawSignal.u32_startTime = millis();
-         } else {
-            if (u16_prevTimer > u16_timer) {
-               u16_pulse = (0xffff - u16_prevTimer) + u16_timer;
+         if (!b_startNewFrame) {
+            if (s_rawSignal.u16_pulses >= RAW_BUFFER_SIZE) {
+               timer_ic_disable(TIM3, TIM_IC3);
+               timer_clear_flag(TIM3, TIM_SR_CC3OF);
             } else {
-               u16_pulse = u16_timer - u16_prevTimer;
+               if (u16_prevTimer > u16_timer) {
+                  u16_pulse = (0xffff - u16_prevTimer) + u16_timer;
+               } else {
+                  u16_pulse = u16_timer - u16_prevTimer;
+               }
+               *s_rawSignal.pu16_pulse++ = u16_pulse;
+               s_rawSignal.u16_pulses++;
             }
-            *s_rawSignal.pu16_pulse++ = u16_pulse;
-            s_rawSignal.u16_pulses++;
          }
          u16_prevTimer = u16_timer;
       } else if (e_state == SENDING) {
@@ -323,9 +342,8 @@ extern "C" void tim3_isr(void) {
                }
                s_rawSignal.pu16_pulse = s_rawSignal.pu16_pulses;
             } else {
-               timer_clear_flag(TIM3, TIM_SR_CC3IF);
                timer_disable_oc_output(TIM3, TIM_OC3);
-               timer_disable_counter(TIM3);
+               timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
 
                o_queue.put(EVENT_RF_STOP_OUT, 0);
                e_state = IDLE;
@@ -419,7 +437,7 @@ void recvRfStart() {
 
 void recvRfStop() {
    register const Plugin *ps_plugin;
-//   bool b_identified;
+   bool b_identified;
    int i_pulses;
    int i;
 
@@ -437,19 +455,21 @@ void recvRfStop() {
          }
       }
 
-//      b_identified = false;
+      b_identified = false;
       ps_plugin = ps_plugins;
       do {
          if (ps_plugin->pf_rxCore(ps_plugin, &s_rawSignal, NULL)) {
-//            b_identified = true;
+            b_identified = true;
             break;
          }
       } while ((uint) (++ps_plugin - ps_plugins) < u8_plugins);
 
-//      if (!b_identified) {
+      if (b_identified) {
+         u8_ledState = LED_START_BLINK;
+//      } else
 //         o_usart.printf("20;%02X;DEBUG;Pulses=%d;Unknown signal\n",
 //               i_sequenceNumber++, i_pulses);
-//      }
+      }
    }
 
    o_queue.put(EVENT_RF_START_IN, 0);
@@ -511,7 +531,8 @@ void setup() {
 
 //   o_usart.puts("USART initialized\n");
    o_usart.printf(
-         "20;00;Nodo RadioFrequencyLink - RFLink Gateway V1.1 - R%02d;\n", 45);
+         "20;%02X;Nodo RadioFrequencyLink - RFLink Gateway V1.1 - R%02d;\n",
+         i_sequenceNumber++, 45);
 
    // Init RFM69 device
    o_rfm69.init(SPI1, NULL, rfm69Reset, true);
@@ -527,14 +548,15 @@ void setup() {
 //   o_usart.puts("Trying to calibrate RFM69 RSSI\n");
    int i_rssiAverage = 0;
    for (int i_loop = 0; i_loop < 1024; i_loop++) {
-      if ((i_loop %10) ==0){
-            gpio_toggle(GPIOC, GPIO13);
+      if ((i_loop & 0x0F) == 0) {
+         gpio_toggle(GPIOC, GPIO13);
       }
-            i_rssiAverage += o_rfm69.readRSSI(false);
+      i_rssiAverage += o_rfm69.readRSSI(false);
       msleep(10);
    }
    i_rssiAverage /= 1024;
-   o_usart.printf("Average RSSI=%d\n", i_rssiAverage);
+   o_usart.printf("20;%02X;DEBUG;RFM69 calibrated RSSI=%d\n",
+         i_sequenceNumber++, i_rssiAverage);
 
    // should be average RSSI when no signal + 20dB (~ -80dB)
    o_rfm69.setFixedThreshold(i_rssiAverage + 20);
@@ -547,7 +569,9 @@ void setup() {
 void loop() {
    uint8_t u8_event;
 
-   __asm volatile ("wfi");
+   if (o_queue.isEmpty()) {
+      __asm volatile ("wfi");
+   }
 
    if (!o_queue.isEmpty()) {
       u8_event = o_queue.get();
@@ -572,10 +596,24 @@ void loop() {
       }
    }
 
-   if ((millis() & 1023) == 0) {
-      int i_rssi = o_rfm69.readRSSI(false);
-      o_usart.printf("RSSI=%d\n", i_rssi);
-      gpio_toggle(GPIOC, GPIO13);
+   if ((millis() & 511) == 0) {
+//      int i_rssi = o_rfm69.readRSSI(false);
+//      o_usart.printf("RSSI=%d\n", i_rssi);
+      switch (u8_ledState) {
+      case LED_IDLE:
+         break;
+      case LED_START_BLINK:
+         gpio_clear(GPIOC, GPIO13);
+         u8_ledState = LED_ON;
+         break;
+      case LED_ON:
+         gpio_set(GPIOC, GPIO13);
+         u8_ledState = LED_OFF;
+         break;
+      case LED_OFF:
+         u8_ledState = LED_IDLE;
+         break;
+      }
    }
 }
 

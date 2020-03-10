@@ -6,7 +6,7 @@
 
 #define NewKAKU_RawSignalLength      130   // regular KAKU packet length
 #define NewKAKUdim_RawSignalLength   146   // KAKU packet length including DIM bits
-#define NewKAKU_TLength               28   // pulse length in 10�s
+#define NewKAKU_TLength               28   // pulse length in 10µs
 #define NewKAKU_mT     (5*NewKAKU_TLength)/2    // us, approx. in between 1T and 4T
 
 const char * const ppc_KAKUCmd[] =

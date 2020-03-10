@@ -770,7 +770,7 @@ int RFM69::send(const uint8_t *pu8_data, int i_dataLength) {
       setMode(RFM69_MODE_RX);
 
       // wait until RSSI sampling is done; otherwise, 0xFF (-127 dBm) is read
-      // RSSI sampling phase takes ~960 �s after switch from standby to RX
+      // RSSI sampling phase takes ~960 µs after switch from standby to RX
       i_loop = 0;
       while (((readRegister(REG_RSSICONFIG) & RF_RSSI_DONE) == 0)
             && i_loop++ < 10) {
