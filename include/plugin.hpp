@@ -13,10 +13,10 @@
 
 /*----------------------------------------------------------------------------*/
 
-// unit sample is 10�s
+// unit sample is 10µs
 #define RAWSIGNAL_SAMPLE_RATE           10
 // Maximum number of pulses that is received in one go.
-#define RAW_BUFFER_SIZE                640
+#define RAW_BUFFER_SIZE                512
 
 /*----------------------------------------------------------------------------*/
 
