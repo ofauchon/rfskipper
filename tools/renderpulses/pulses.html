@@ -14,7 +14,7 @@
 
         <div id="div1"
             style="width:100%;height:150px;border-width:1px;border-style:dotted;border-color:black;overflow-x: auto">
-            <svg id="svg1" xmlns="http://www.w3.org/2000/svg" version="1.1"
+            <svg id="svg_root" xmlns="http://www.w3.org/2000/svg" version="1.1"
                 style="width:100%;height:100%;background-color:lightgray"></svg>
         </div>
         Trace<br>
@@ -36,9 +36,6 @@
 
         var dek = new Dekoder()
 
-
-
-
         /*
         * This ons logs on html console
         */
@@ -47,23 +44,37 @@
         }
 
 
-
-
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+                return color;
+            }
+        }
 
         /*
         *  Draw the signal from pulses 
         */
-        function drawPulse(pPulses) {
-            console1("*** drawPulse")
+        function drawPulse(pPulses, pIndex, pColor, pOffset) {
+            console1("*** DrawPulse #" + pIndex + " color:" + pColor + " offset:" + pOffset)
 
             sHeight = 150
             sWidth = 5000
 
             var totalDuration = 0, totalWidth = 0, posX = 0, newH = 0, oldH = 0;
 
-            // Get the svg and zero it
-            var svg1 = document.getElementById("svg1")
-            svg1.innerHTML = '';
+            // Get the svg root
+            var svgroot = document.getElementById("svg_root")
+            if (svgroot == null ) alert("Can't find 'svg_root' root tag !")
+            
+            var subsvg= svgroot.childNodes.item("subsvg" + pIndex)
+            if (subsvg == null ){
+            console1("No subsvg"+pIndex+" , creating it")
+            var subsvg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            subsvg.setAttribute("id", "subsvg"+pIndex);
+            }
+            svgroot.innerHTML = '';
 
             // Resize the svg to 100% of 
             // Get total trace duration
@@ -90,34 +101,37 @@
 
                 var newLineH = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 newLineH.setAttribute('x1', posX * xfactor);
-                newLineH.setAttribute('y1', newH);
+                newLineH.setAttribute('y1', newH + pOffset);
                 newLineH.setAttribute('x2', (posX + wi) * xfactor);
-                newLineH.setAttribute('y2', newH);
-                newLineH.setAttribute("stroke", "black");
-                svg1.appendChild(newLineH);
+                newLineH.setAttribute('y2', newH + pOffset);
+                newLineH.setAttribute("stroke", pColor);
+                subsvg.appendChild(newLineH);
 
                 var newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 newText.setAttribute('x', posX * xfactor);
-                newText.setAttribute('y', newH);
-                newText.setAttribute('fill', 'blue');
+                newText.setAttribute('y', newH + pOffset);
+                newText.setAttribute('fill', pColor);
                 newText.setAttribute('font-size', "6px");
                 newText.textContent = i + ":" + wi;
-                svg1.appendChild(newText);
+                subsvg.appendChild(newText);
 
                 posX += wi;
 
                 var newLineV = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 newLineV.setAttribute('x1', posX * xfactor);
-                newLineV.setAttribute('y1', oldH);
+                newLineV.setAttribute('y1', oldH + pOffset);
                 newLineV.setAttribute('x2', posX * xfactor);
-                newLineV.setAttribute('y2', newH);
-                newLineV.setAttribute("stroke", "red");
-                svg1.appendChild(newLineV);
+                newLineV.setAttribute('y2', newH + pOffset);
+                newLineV.setAttribute("stroke", pColor);
+                subsvg.appendChild(newLineV);
                 oldH = newH;
 
             }
 
-            window.zoomTiger = svgPanZoom('#svg1', {
+            svgroot.appendChild(subsvg);
+
+
+            window.zoomTiger = svgPanZoom('#svg_root', {
                 zoomEnabled: true,
                 controlIconsEnabled: true,
             });
@@ -144,15 +158,25 @@
             // Clear console
             document.getElementById('console1').value = "";
 
-            // Get trace and init decoder
-            var s = document.getElementById('text1').value;
-            var pulses = dek.initFromTrace(s)
-
-            if (pulses == null) {
-                console1("Fatal: pulses is null (decoding error?)");
+            // reset traces
+            var traces = []
+            // Parse textarea input and decode pulses trace
+            var lines = document.getElementById('text1').value.split('\n'); // process every lines of textarea
+            for(var i = 0;i < lines.length;i++){
+                var line = lines[i]
+                if (line.startsWith("20")){
+                    var t= dek.traceToPulse(line)
+                    if (t != null ) {
+                        traces.push(t)
+                    }
+                }
             }
-            console1("INFO: Trace has " + pulses.length + " pulses")
-            drawPulse(dek.getPulses());
+            console1("NFO: traces[] now contains "+traces.length+" entries ")
+
+            for (var k=0; k<traces.length; k++){
+                console1("DRAW " + k)
+                drawPulse(traces[k], k, "red", 100*k);
+            }
 
             // DECODE HERE
             dek.setShortPulseDuration(210 * 0.95)  // 95% of 210ms

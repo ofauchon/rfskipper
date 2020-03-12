@@ -149,10 +149,10 @@ class Dekoder {
 
 
     /*
-    * Read Pulse Debug trace and return a Uint16Array with the pulses
-    * nb: Function returns null on decoding error 
+    * pTrace: Read Pulse Debug trace 
+    * Returns : Uint16Array Array of pulses  or null on decoding error
     */
-    initFromTrace(pTrace) {
+    traceToPulse(pTrace) {
         var t1 = pTrace.match(/.*\(uSec\)=(.*);/);
         if (t1 == null) {
             //alert("decodeStringPulses: Input string should contain 'Pulses(uSec)='");
@@ -165,13 +165,12 @@ class Dekoder {
             return null;
         }
 
-        this.pulses = new Uint16Array(t2.length);
-        //console1("decodeStringPulses: " + t2.length + " tokens found.")
-        for (var i = 0; i < t2.length; i++) {
-            this.pulses[i] = t2[i];
-        }
-        return this.pulses;
-    }
+        var ret = new Uint16Array(t2.length);
 
+        for (var i = 0; i < t2.length; i++) {
+            ret[i] = t2[i];
+        }
+        return ret;
+    }
 
 }
