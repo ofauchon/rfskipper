@@ -12,13 +12,9 @@
 
 #include <libopencm3/cm3/cortex.h>
 
-
 /*----------------------------------------------------------------------------*/
 
-enum _Polarity {
-   Low = 0,
-   High = 1
-};
+enum _Polarity { Low = 0, High = 1 };
 typedef enum _Polarity Polarity;
 
 typedef unsigned char uchar;
@@ -42,7 +38,7 @@ extern volatile uint32_t u32_systemMillis;
 
 inline uint32_t millis() __attribute__((always_inline));
 inline uint32_t millis() {
-   return u32_systemMillis;
+  return u32_systemMillis;
 }
 
 extern void msleep(uint32_t delay);

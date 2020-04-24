@@ -8,18 +8,18 @@
 /*----------------------------------------------------------------------------*/
 
 extern USART o_usart;
-extern int i_sequenceNumber;
+extern uint8_t u8_sequenceNumber;
 
 /*----------------------------------------------------------------------------*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct _Command Command;
+typedef void(CommandFunction)(const Command *ps_cmd, const char *pc_option);
+typedef CommandFunction *CommandFunctionPtr;
 
-
-#ifdef __cplusplus
-}
-#endif
+struct _Command {
+  const char *pc_name;
+  CommandFunctionPtr pf_cmdCore;
+};
 
 /*----------------------------------------------------------------------------*/
 

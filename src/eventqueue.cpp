@@ -1,5 +1,5 @@
 /*
- * eventQueue.C
+ * eventqueue.cpp
  *
  *  Created on: 22 Oct 2019
  *      Author: Pierre
@@ -37,7 +37,7 @@ uint8_t EventQueue::get() {
    u8_event = _pu8_heap[0];
 
    if (_u8_size > 1) {
-      _pu8_heap[0] = _pu8_heap[_u8_size--];
+    _pu8_heap[0] = _pu8_heap[--_u8_size];
       i_node = 0;
 
       for (;;) {
