@@ -2,39 +2,54 @@
 <html>
 
 <head>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="./svg-pan-zoom.js"></script>
     <script src="./signal.js"></script>
 
 </head>
 
-<body>
+<body">
 
     <p align=center>
         <h2 align=center>RFSkipper Pulses Display</h2>
 
         <div id="div1"
-            style="width:100%;height:150px;border-width:1px;border-style:dotted;border-color:black;overflow-x: auto">
+            style="width:100%;height:300px;border-width:1px;border-style:dotted;border-color:black;overflow-x: auto; overflow-y: hidden; ">
             <svg id="svg_root" xmlns="http://www.w3.org/2000/svg" version="1.1"
-                style="width:100%;height:100%;background-color:lightgray"></svg>
+                style="width:100%;height:300px;background-color:white">
+            <g id="svg_maingroup"></g></svg>
         </div>
         Trace<br>
 
-        <textarea id="text1" style="width:100%;height:100px;font-size: 10px">
-            20;188;DEBUG;Pulses=301;Pulses(uSec)=210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,410,630,620,210,210,210,210,420,410,210,200,420,410,220,200,220,200,210,210,210,200,210,210,210,200,210,210,420,410,210,210,210,200,220,200,210,210,420,200,210,210,210,410,210,200,220,200,210,210,210,210,210,200,210,210,420,200,210,420,210,200,420,210,210,200,210,210,210,200,210,420,420,200,210,420,420,200,210,410,420,420,210,200,420,210,210,210,210,410,210,200,420,420,210,200,210,210,420,410,210,210,210,200,420,410,220,200,210,210,420,200,210,420,210,200,420,210,210,410,420,210,210,410,420,410,210,210,420,410,420,200,220,200,210,420,210,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,420,410,210,210,210,200,220,200,210,210,210,200,220,200,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,210,210,200,210,210,420,200,210,420,210,200,420,420,210,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,210,200,210,210,420,410,210,210,210,200,420,410,420,420,210,200,210,210,420,410,210,210,420,200,210,210,210,200,220,200,210;';
-            </textarea><br>
+        <textarea id="text1" style="width:100%;height:100px;font-size: 10px">(Copy RFSkipper traces here to visualize)</textarea><br>
         Console</br>
         <textarea id="console1"
             style="width:100%;height:100px;border:1px solid;font-size: 10px">Console logs: \n</textarea><br>
 
-        <button type="button" onclick="clickGenerate()">Generer</button>
+            <button type="button" onclick="demoTraces()">Fill Demo Traces</button>
+            <button type="button" onclick="clickGenerate(false)">Draw</button>
+            <button type="button" onclick="clickGenerate(true)">Draw (overlay)</button>
+
 
     </p>
 
 
     <script>
 
+        var xfactor;
 
-        var dek = new Dekoder()
+        var demo_traces=`
+20;FD;DEBUG;Pulses=301;Pulses(uSec)=210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,410,630,630,210,200,210,210,420,410,210,200,420,420,210,210,210,200,210,210,210,200,210,210,210,200,210,210,420,410,220,200,210,210,210,200,210,210,420,200,210,210,210,410,210,210,210,210,210,200,210,210,210,200,210,210,420,200,220,410,210,210,410,210,210,200,210,210,210,200,220,410,420,210,210,410,420,200,210,420,410,420,210,210,420,200,210,210,210,410,210,200,420,420,210,210,210,200,420,410,210,210,210,200,420,420,210,200,220,200,420,200,220,410,210,200,420,210,210,410,420,210,210,410,420,410,210,210,420,410,420,210,210,200,210,420,210,200,210,210,210,200,210,210,210,210,210,200,220,200,210,200,220,200,420,410,220,200,210,210,210,200,220,200,210,200,220,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,210,210,420,210,210,410,210,210,410,420,210,200,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,200,210,210,210,210,200,220,200,420,410,210,210,210,200,420,420,420,410,210,200,210,210,420,410,210,210,420,200,220,200,210,200,220,200,210;
+//20;17B;DEBUG;Pulses=299;Pulses(uSec)=210,210,210,210,200,210,210,210,210,200,210,210,210,200,220,200,210,420,620,620,220,200,210,210,410,420,210,210,410,420,210,200,210,210,210,200,220,200,210,210,210,210,200,210,420,410,210,210,210,200,220,200,210,210,420,200,210,210,210,410,210,210,210,200,210,210,210,210,210,200,210,210,210,200,420,420,210,200,420,210,210,200,210,210,210,210,200,420,420,200,210,420,420,200,210,420,410,420,210,200,420,210,210,210,210,410,210,210,410,420,210,200,220,200,420,410,210,210,210,200,420,420,410,420,420,410,420,200,220,410,420,200,210,210,210,420,410,210,210,200,220,200,210,210,210,410,210,210,210,200,420,210,210,410,420,410,210,210,210,210,210,200,220,200,210,200,220,200,420,410,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,200,210,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,210,210,210,200,210,210,210,210,210,200,210,210,210,200,420,420,210,200,210,210,210,210,210,200,210,210,210,200,210,210,210,210,200,210,210,210,210,200,220,200,420,410,210,210,210,200,210,210,210,210,210,200,220,200,420,410,420,210,200,420,210,210,410,420,420,200,210,420,210,200,210,210,210,200,430,410,210,200,210,210,80;
+//20;188;DEBUG;Pulses=301;Pulses(uSec)=210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,410,630,620,210,210,210,210,420,410,210,200,420,410,220,200,220,200,210,210,210,200,210,210,210,200,210,210,420,410,210,210,210,200,220,200,210,210,420,200,210,210,210,410,210,200,220,200,210,210,210,210,210,200,210,210,420,200,210,420,210,200,420,210,210,200,210,210,210,200,210,420,420,200,210,420,420,200,210,410,420,420,210,200,420,210,210,210,210,410,210,200,420,420,210,200,210,210,420,410,210,210,210,200,420,410,220,200,210,210,420,200,210,420,210,200,420,210,210,410,420,210,210,410,420,410,210,210,420,410,420,200,220,200,210,420,210,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,420,410,210,210,210,200,220,200,210,210,210,200,220,200,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,210,210,200,210,210,420,200,210,420,210,200,420,420,210,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,210,200,210,210,420,410,210,210,210,200,420,410,420,420,210,200,210,210,420,410,210,210,420,200,210,210,210,200,220,200,210;"
+`
+
+var colors=['darkblue', 'saddlebrown', 'teal', 'mediumvioletred', 'darkgreen', 'indigo', 'dimgray']
+
+
+
+
 
         /*
         * This ons logs on html console
@@ -56,8 +71,8 @@
         /*
         *  Draw the signal from pulses 
         */
-        function drawPulse(pPulses, pIndex, pColor, pOffset) {
-            console1("*** DrawPulse #" + pIndex + " color:" + pColor + " offset:" + pOffset)
+        function drawPulse(pPulses, pIndex, pOffset) {
+            console1("*** DrawPulse ("+pPulses.length + ") index:" + pIndex + " offset:" + pOffset)
 
             sHeight = 150
             sWidth = 5000
@@ -65,35 +80,40 @@
             var totalDuration = 0, totalWidth = 0, posX = 0, newH = 0, oldH = 0;
 
             // Get the svg root
-            var svgroot = document.getElementById("svg_root")
-            if (svgroot == null ) alert("Can't find 'svg_root' root tag !")
+            var svgmaingroup = document.getElementById("svg_maingroup")
+            if (svgmaingroup == null ) alert("Can't find 'svg/maingroup' root tag !")
             
-            var subsvg= svgroot.childNodes.item("subsvg" + pIndex)
+            var subsvg= document.getElementById("subsvg" + pIndex)
             if (subsvg == null ){
-            console1("No subsvg"+pIndex+" , creating it")
-            var subsvg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            subsvg.setAttribute("id", "subsvg"+pIndex);
+                console1("No subsvg"+pIndex+" , creating it")
+                var subsvg = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                subsvg.setAttribute("id", "subsvg"+pIndex);
+                svgmaingroup.appendChild(subsvg);
+            } else {
+                console1("Found subsvg"+pIndex+" reuse it")
+                subsvg.innerHTML = '';
             }
-            svgroot.innerHTML = '';
 
+            // svgroot.innerHTML = '';
             // Resize the svg to 100% of 
             // Get total trace duration
             var totalDuration = 0;
             for (i = 0; i < pPulses.length; i++) {
                 totalDuration += pPulses[i];
             }
-            xfactor = sWidth / totalDuration;
+            xfactor = sWidth / totalDuration ;
 
+            yfactor=1
 
-            oldH = sHeight * 0.8;
+            oldH = sHeight * yfactor * 0.8;
             // Iterate the pulse array and draw lines in SVG
             for (i = 0; i < pPulses.length; i++) {
 
 
                 if (i % 2) {
-                    newH = sHeight * 0.8;
+                    newH = sHeight * yfactor * 0.8;
                 } else {
-                    newH = sHeight * 0.2;
+                    newH = sHeight * yfactor * 0.2;
                 }
 
                 wi = pPulses[i]
@@ -104,13 +124,13 @@
                 newLineH.setAttribute('y1', newH + pOffset);
                 newLineH.setAttribute('x2', (posX + wi) * xfactor);
                 newLineH.setAttribute('y2', newH + pOffset);
-                newLineH.setAttribute("stroke", pColor);
+                newLineH.setAttribute("stroke", colors[pIndex]);
                 subsvg.appendChild(newLineH);
 
                 var newText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 newText.setAttribute('x', posX * xfactor);
                 newText.setAttribute('y', newH + pOffset);
-                newText.setAttribute('fill', pColor);
+                newText.setAttribute('fill', colors[pIndex]);
                 newText.setAttribute('font-size', "6px");
                 newText.textContent = i + ":" + wi;
                 subsvg.appendChild(newText);
@@ -122,22 +142,34 @@
                 newLineV.setAttribute('y1', oldH + pOffset);
                 newLineV.setAttribute('x2', posX * xfactor);
                 newLineV.setAttribute('y2', newH + pOffset);
-                newLineV.setAttribute("stroke", pColor);
+                newLineV.setAttribute("stroke", colors[pIndex]);
                 subsvg.appendChild(newLineV);
                 oldH = newH;
 
             }
 
-            svgroot.appendChild(subsvg);
-
-
+            // Installing ZoomTiger SVG 
+            console1("NFO: Installing zoomtiger")
             window.zoomTiger = svgPanZoom('#svg_root', {
                 zoomEnabled: true,
                 controlIconsEnabled: true,
-            });
+                });
+
 
         }
+        /* Set marks on the trace */
+        function mark(pIndex, pStart, pEnd, pColor, pMsg) {
+            var subsvg= document.getElementById("subsvg" + pIndex)
+            var newLineH = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                newLineH.setAttribute('x1', pStart );
+                newLineH.setAttribute('y1', 50 * pIndex);
+                newLineH.setAttribute('x2', pEnd );
+                newLineH.setAttribute('y2', 50*pIndex);
+                newLineH.setAttribute("stroke", pColor);
+                //newLineH.setAttribute('stroke-width=',3)
+                subsvg.appendChild(newLineH);
 
+        }
 
 
         function decodeProtocol(pPulses) {
@@ -150,10 +182,8 @@
 
         /* -------------------------------------------------------------------------------- */
 
-        function clickGenerate() {
+        function clickGenerate(pIsOverlay) {
 
-            sample = "20;FD;DEBUG;Pulses=301;Pulses(uSec)=210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,410,630,630,210,200,210,210,420,410,210,200,420,420,210,210,210,200,210,210,210,200,210,210,210,200,210,210,420,410,220,200,210,210,210,200,210,210,420,200,210,210,210,410,210,210,210,210,210,200,210,210,210,200,210,210,420,200,220,410,210,210,410,210,210,200,210,210,210,200,220,410,420,210,210,410,420,200,210,420,410,420,210,210,420,200,210,210,210,410,210,200,420,420,210,210,210,200,420,410,210,210,210,200,420,420,210,200,220,200,420,200,220,410,210,200,420,210,210,410,420,210,210,410,420,410,210,210,420,410,420,210,210,200,210,420,210,200,210,210,210,200,210,210,210,210,210,200,220,200,210,200,220,200,420,410,220,200,210,210,210,200,220,200,210,200,220,200,210,210,210,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,210,210,200,210,210,210,200,210,210,210,200,220,200,210,210,210,200,220,200,210,210,210,200,210,210,210,200,210,210,420,210,210,410,210,210,410,420,210,200,210,210,210,210,210,200,210,210,210,200,220,200,210,210,210,200,210,210,210,210,200,210,210,210,210,200,220,200,420,410,210,210,210,200,420,420,420,410,210,200,210,210,420,410,210,210,420,200,220,200,210,200,220,200,210;";
-            document.getElementById('text1').value = sample;
 
             // Clear console
             document.getElementById('console1').value = "";
@@ -165,7 +195,7 @@
             for(var i = 0;i < lines.length;i++){
                 var line = lines[i]
                 if (line.startsWith("20")){
-                    var t= dek.traceToPulse(line)
+                    var t= Dekoder.debugToTrace(line)
                     if (t != null ) {
                         traces.push(t)
                     }
@@ -173,22 +203,69 @@
             }
             console1("NFO: traces[] now contains "+traces.length+" entries ")
 
+            offset =0; 
+            if (pIsOverlay==true){
+                offset=100
+            }
             for (var k=0; k<traces.length; k++){
-                console1("DRAW " + k)
-                drawPulse(traces[k], k, "red", 100*k);
+                console1("NFO: Drawing trace " + k +"/" + traces.length)
+                drawPulse(traces[k], k, offset*k);
+
+                var dek = new Dekoder()
+                dek.setTrace(traces[k])
+                dek.setPosition(0);
+                dek.setShortPulseDuration(210);
+
+                // Decode three first byte (sync) 
+              //  console1(k + " > decode: " + Dekoder.toHexString(b1));
+                
+                mark(k, (210 * 8 * 0)* xfactor, (210 * 8 * 1)* xfactor , "red", "AA")
+                mark(k, (210 * 8 * 1)* xfactor, (210 * 8 * 2)* xfactor , "blue", "AA")
+                mark(k, (210 * 8 * 2)* xfactor, (210 * 8 * 3)* xfactor , "brown", "AA")
+                mark(k, (210 * 8 * 3)* xfactor, (210 * 8 * 5)* xfactor , "green", "AA")
+
+                dek.setPosition(0)
+                var tbytes = dek.readBytes(100)
+                console1("3 first bytes " + Dekoder.toHexString(tbytes.slice(0,3)))
+                
+                var tbits = Dekoder.bytesToBits(tbytes.slice(3)) 
+                console1("Next 16 bits" + Dekoder.toHexString(tbits.slice(0,16)))
+
+                var payload = dek.decodeManchester2(tbits)
+                payload = payload.slice(1) // Skip first bit : packet length
+                console1("###"+  Dekoder.toHexString(payload));
+                var id = payload[1]
+                id = (id <<8) + payload[5]
+                id = (id <<8) + payload[4]
+                id = (id <<8) + payload[3]
+                id = (id <<8) + payload[2]
+
+                var cntr = payload[10]
+                cntr = cntr<<8 + payload[9]
+                cntr = cntr<<8 + payload[8]
+                cntr = cntr<<8 + payload[7]
+                console1("Cartelectronique : MeterID:" + id + "Power: " + cntr)
+
+
+
+/*
+                // decode with manchester
+                var pos1 = dek.getPosition();                
+                var r = dek.decodeManchester(true, 0, (210 + 420) / 2, 8*8)
+                var pos2 = dek.getPosition();
+                console1(k + " > decode ( pulse " + pos1 + " to " + pos2 + "): " + Dekoder.toHexString(r));
+  */             
+                // mark(k, dek.pulseToTime(pos1)* xfactor, dek.pulseToTime(pos2) * xfactor , "green", "AA")
             }
 
-            // DECODE HERE
-            dek.setShortPulseDuration(210 * 0.95)  // 95% of 210ms
-            threebytes = dek.readBytes(3)
-
-            var pos1 = dek.getPosition();
-            console1("decode (0-" + pos1 + "): " + dek.toHexString(threebytes));
-
-            var r = dek.decodeManchester(0, 0, (210 + 420) / 2)
-            console1("decode (" + pos1 + "-" + dek.getPosition() + "): " + dek.toHexString(r));
+ 
 
         }
+
+
+        function demoTraces(){
+            document.getElementById('text1').value = demo_traces;
+       }
 
 
 
