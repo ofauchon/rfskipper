@@ -34,6 +34,57 @@ function decode_ticpulses( trace){
 }
 
 
-function decode_tfa(){
+function decode_tfa(trace){
+    var base_width = 500
+    var short_width = 2000
+    var long_width  = 4000
+    var error_pct=0.2 // 20% error
+    console1("DECODE TFA with trace of " + trace.length + " elements")
+
+    var nibbles=[]
+    var pos=0; 
+    var nibble=0;
+    var bitcount=0
+    while (pos < trace.length){
+        if (!(trace[pos] > base_width * (1-error_pct) && trace[pos] < base_width * (1+error_pct))){
+            pos++
+            continue
+        }
+        
+        if (trace[pos+1] > short_width * (1-error_pct) && trace[pos+1] < short_width * (1+error_pct)){
+            nibble = nibble *2 
+            bitcount++
+            pos++
+            //console1("Short pulse => bit 0 @" +pos +" nibble="+ nibble)
+        } else if (trace[pos+1] > long_width * (1-error_pct) && trace[pos+1] < long_width * (1+error_pct)){
+                nibble = nibble *2 +1
+                bitcount++
+                pos++
+              //  console1("Long pulse =>  bit 1 @"  + pos  +" nibble="+ nibble)
+            } else {
+                console1("Err: Base pulse not followed by short/long @" + pos)
+        }
+        if(bitcount==4){
+                console1("New Nibble :" + nibble.toString(16))
+                nibbles.push(nibble)
+                nibble=0
+                bitcount=0
+        }
+        pos++
+         
+    }
+
+    var pType = nibbles[0]
+    var pId = ((nibbles[1] & 0x0F) << 4 ) | nibbles[2]
+    var pBat = nibbles[3] & 0x08
+    var pButton = ((nibbles[3] & 0x04) >>2)
+    var pTemp = nibbles[4]
+    pTemp = (pTemp << 4) + nibbles[5]
+    pTemp = (pTemp << 4) + nibbles[6]
+    
+    
+     
+    console1("type:"+ pType + " id:" + pId + " bat:" + pBat + " button:" + pButton + " temp:" + pTemp  )
+
 
 }

@@ -67,7 +67,8 @@ class Signal {
             console.log(pLog)
         }
     }
-    
+
+    // Read Bytes from trace
     readBytes(pNumBytes) {
         var ret = [];
         var bitcount = 0;
