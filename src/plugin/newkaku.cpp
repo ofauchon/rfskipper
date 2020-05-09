@@ -53,9 +53,9 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
       i_bit = 1; // T,4T,T,T
     } else if (p0 < NewKAKU_mT && p1 < NewKAKU_mT && p2 < NewKAKU_mT &&
                p3 < NewKAKU_mT) { // T,T,T,T should be on i=111 (bit 28)
-      // b_dimPresent = true;
-      if (i_pulses != NewKAKUdim_RawSignalLength) { // dim set but no dim bits
-                                                    // present => invalid signal
+                                  //      b_dimPresent = true;
+      if (i_pulses != NewKAKUdim_RawSignalLength) {
+        // dim set but no dim bits present => invalid signal
         return false;
       }
       i_bit = 0;
@@ -82,9 +82,9 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   ps_rawSignal->u32_prevTime = ps_rawSignal->u32_startTime;
 
   i = (u32_bitStream >> 4) & 0x03;
-  o_usart.printf("20;%02X;%s;ID=%08x;SWITCH=%x;CMD=%s;\n", u8_sequenceNumber++,
-                 ps_plugin->pc_name, ((u32_bitStream) >> 6),
-                 ((u32_bitStream) &0x0f) + 1, ppc_KAKUCmd[i]);
+
+  output(ps_plugin->pc_name, "ID=%08x;SWITCH=%x;CMD=%s;",
+         ((u32_bitStream) >> 6), ((u32_bitStream) &0x0f) + 1, ppc_KAKUCmd[i]);
 
   return true;
 }

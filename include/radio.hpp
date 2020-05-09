@@ -3,10 +3,12 @@
 
 /*----------------------------------------------------------------------------*/
 
+#include "usb.hpp"
 #include "usart.hpp"
 
 /*----------------------------------------------------------------------------*/
 
+extern USB o_usb;
 extern USART o_usart;
 extern uint8_t u8_sequenceNumber;
 

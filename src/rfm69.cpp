@@ -839,9 +839,9 @@ int RFM69::send(const uint8_t *pu8_data, int i_dataLength) {
   }
 
   u8_value = readRegister(REG_PACKETCONFIG1);
-  writeRegister(REG_PACKETCONFIG1,
-                (u8_value & 0x0F) | RF_PACKET1_FORMAT_VARIABLE |
-                    RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON);
+  writeRegister(REG_PACKETCONFIG1, (u8_value & 0x0F) |
+                                     RF_PACKET1_FORMAT_VARIABLE |
+                                     RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON);
 
   // transfer packet to FIFO
   _o_spi.enableSlaveDevice();
@@ -894,8 +894,8 @@ void RFM69::setDataMode(RFM69DataMode e_dataMode) {
   case RFM69_DATA_MODE_PACKET:
     writeRegister(REG_DATAMODUL, u8_value);
     writeRegister(
-        REG_DIOMAPPING1,
-        RF_DIOMAPPING1_DIO0_00); // Dio0Mapping = 00 (DIO0 is "Packet Sent")
+      REG_DIOMAPPING1,
+      RF_DIOMAPPING1_DIO0_00); // Dio0Mapping = 00 (DIO0 is "Packet Sent")
     break;
 
   case RFM69_DATA_MODE_CONTINUOUS_WITH_SYNC:
@@ -1002,13 +1002,13 @@ void RFM69::setBitRate(uint32_t u32_bitrate) {
  *
  * Symbol 'DEBUG' has to be defined.
  */
-void RFM69::dumpRegisters(USART &o_usart) {
+void RFM69::dumpRegisters(USB &o_usb) {
 #ifdef DEBUG
   uint8_t u8_value;
 
   for (uint i = 1; i <= 0x71; i++) {
     u8_value = readRegister(i);
-    o_usart.printf("[0x%02X]: 0x%02X 0b%08b\n", i, u8_value, u8_value);
+    o_usb.printf("[0x%02X]: 0x%02X 0b%08b\r\n", i, u8_value, u8_value);
   }
 #endif
 }

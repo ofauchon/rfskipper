@@ -87,6 +87,7 @@ template <int SIZE> int RING<SIZE>::read(uint8_t *pu8_data, int i_size) {
 /*----------------------------------------------------------------------------*/
 
 template class RING<60>;
+template class RING<128>;
 template class RING<256>;
 
 /*----------------------------------------------------------------------------*/

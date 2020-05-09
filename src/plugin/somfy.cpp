@@ -131,10 +131,9 @@ bool plugin099Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   u32_address = (u32_address << 8) | s_frame.pu8_address[1];
   u32_address = (u32_address << 8) | s_frame.pu8_address[0];
 
-  o_usart.printf("20;%02X;%s;ID=%08d;SWITCH=%x;CMD=%s;\n", u8_sequenceNumber++,
-                 ps_plugin->pc_name, u32_address,
-                 (s_frame.u8_rollingCodeMSB << 8) + s_frame.u8_rollingCodeLSB,
-                 ppc_SomfyCmd[s_frame.u8_cmdChksum >> 4]);
+  output(ps_plugin->pc_name, "ID=%08d;SWITCH=%x;CMD=%s;", u32_address,
+         (s_frame.u8_rollingCodeMSB << 8) + s_frame.u8_rollingCodeLSB,
+         ppc_SomfyCmd[s_frame.u8_cmdChksum >> 4]);
 
   return true;
 }
@@ -271,7 +270,7 @@ bool plugin099Tx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                               sizeof(u16_rollingCode));
 
   if (b_pairing) {
-    o_usart.printf("20;%02X;OK;\n", u8_sequenceNumber++);
+    o_usb.printf("20;%02X;OK;\r\n", u8_sequenceNumber++);
   }
 
   return true;
@@ -300,8 +299,8 @@ void plugin099Show(const Command *ps_plugin, const char *pc_option) {
     if (pv_handle == NULL) {
       break;
     }
-    o_usart.printf("RTS Record Address=%06X, RC=%04X\n", *((uint32_t *) pv_key),
-                   *((uint16_t *) pv_data));
+    o_usb.printf("RTS Record Address=%06X, RC=%04X\r\n", *((uint32_t *) pv_key),
+                 *((uint16_t *) pv_data));
   }
 }
 

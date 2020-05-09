@@ -14,7 +14,10 @@
 #include "radio.hpp"
 #include "standard.hpp"
 #include "rfm69.hpp"
+#ifdef USART_DEBUG
 #include "usart.hpp"
+#endif
+#include "usb.hpp"
 #include "ring.hpp"
 #include "eventqueue.hpp"
 #include "plugin.hpp"
@@ -31,7 +34,9 @@
 #define EVENT_RF_STOP_IN 30
 #define EVENT_RF_STOP_OUT 25
 #define EVENT_RF_START_OUT 20
+#define EVENT_USB_OUT 16
 #define EVENT_USART_OUT 15
+#define EVENT_USB_IN 11
 #define EVENT_USART_IN 10
 #define EVENT_RF_START_IN 5
 
@@ -64,8 +69,10 @@ const uint8_t u8_commands = sizeof(ps_commands) / sizeof(Command);
 // local variables
 namespace {
 RFM69 o_rfm69;
-RING<256> o_usartIn;
-RING<60> o_usartOut;
+RING<256> o_cmdIn;
+#ifdef USART_DEBUG
+RING<128> o_cmdOut;
+#endif
 EventQueue o_queue;
 bool b_rfDebug = false;
 volatile uint32_t u32_txTimeout = 0;
@@ -76,7 +83,10 @@ uint8_t u8_ledState;
 } // namespace
 
 // global variables accessed from the plugins
+USB o_usb;
+#ifdef USART_DEBUG
 USART o_usart;
+#endif
 uint8_t u8_sequenceNumber = 0;
 
 /*----------------------------------------------------------------------------*/
@@ -145,7 +155,7 @@ testAndSetState(volatile Rfm69State &e_state, Rfm69State e_currentState,
 }
 
 /*----------------------------------------------------------------------------*/
-
+#ifdef USART_DEBUG
 extern "C" void usart1_isr(void) {
   /* Check if we were called because of RXNE. */
   if (((USART_CR1(USART1) & USART_CR1_RXNEIE) != 0) &&
@@ -153,7 +163,7 @@ extern "C" void usart1_isr(void) {
     int16_t u16_data = usart_recv(USART1);
 
     /* Retrieve the data from the peripheral. */
-    o_usartIn.writeByte(u16_data);
+    o_cmdIn.writeByte(u16_data);
     if (u16_data == '\n') {
       o_queue.put(EVENT_USART_IN, 0);
     }
@@ -166,13 +176,33 @@ extern "C" void usart1_isr(void) {
   if (((USART_CR1(USART1) & USART_CR1_TXEIE) != 0) &&
       ((USART_SR(USART1) & USART_SR_TXE) != 0)) {
 
-    int i_data = o_usartOut.readByte();
+    int i_data = o_cmdOut.readByte();
     if (i_data == -1) {
       /* Disable the TXE interrupt, it's no longer needed. */
       usart_disable_tx_interrupt(USART1);
     } else {
       /* Put data into the transmit register. */
       usart_send(USART1, i_data);
+    }
+  }
+}
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+extern "C" void sys_tick_handler() {
+  ++u32_systemMillis;
+
+  // test for reception timeout
+  if (u32_txTimeout != 0 && u32_systemMillis >= u32_txTimeout &&
+      e_state == RECEIVING) {
+    u32_txTimeout = 0;
+
+    timer_ic_disable(TIM3, TIM_IC3);
+    timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
+
+    if (testAndSetState(e_state, RECEIVING, PROCESSING) == 0) {
+      o_queue.put(EVENT_RF_STOP_IN, 0);
     }
   }
 }
@@ -208,7 +238,7 @@ void timer3Init() {
 /*----------------------------------------------------------------------------*/
 
 void timer3SetupInputCapture(uint16_t u16_autoReload, uint16_t u16_prescaler) {
-  gpio_set_mode(GPIO_BANK_TIM3_CH3, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT,
+  gpio_set_mode(GPIO_BANK_TIM3_CH3, GPIO_MODE_INPUT, GPIO_CNF_INPUT_PULL_UPDOWN,
                 GPIO_TIM3_CH3);
 
   /* Timer global mode:
@@ -300,6 +330,7 @@ extern "C" void tim3_isr(void) {
   uint16_t u16_timer;
   uint16_t u16_pulse;
   bool b_startNewFrame;
+  bool b_lastPulse;
 
   if (timer_get_flag(TIM3, TIM_SR_CC3IF) != 0) {
     if (e_state == LISTENING) {
@@ -347,23 +378,24 @@ extern "C" void tim3_isr(void) {
       }
 
       u16_pulse = s_rawSignalOut.pu16_pulse - s_rawSignalOut.pu16_pulses;
-      if (u16_pulse == s_rawSignalOut.u16_pulses) {
-        u16_timer = s_rawSignalOut.u16_interFrameGap;
-        if (s_rawSignalOut.u8_repeats-- == 1) {
-          timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_FORCE_LOW);
-          u16_timer += 15000;
-        }
-        s_rawSignalOut.pu16_pulse = s_rawSignalOut.pu16_pulses;
+      b_lastPulse = u16_pulse == s_rawSignalOut.u16_pulses;
+      if (b_lastPulse) {
+        u16_timer = 0;
       } else {
         u16_timer = *s_rawSignalOut.pu16_pulse++;
         if ((u16_pulse & 1) && u16_pulse == s_rawSignalOut.u16_pulses - 1) {
           // signal is low -> merge pulse with inter frame gap
-          u16_timer += s_rawSignalOut.u16_interFrameGap;
-          if (s_rawSignalOut.u8_repeats-- == 1) {
-            timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_FORCE_LOW);
-            u16_timer += 15000;
-          }
-          s_rawSignalOut.pu16_pulse = s_rawSignalOut.pu16_pulses;
+          b_lastPulse = true;
+        }
+      }
+
+      if (b_lastPulse) {
+        u16_timer += s_rawSignalOut.u16_interFrameGap;
+        s_rawSignalOut.pu16_pulse = s_rawSignalOut.pu16_pulses;
+
+        if (s_rawSignalOut.u8_repeats-- == 1) {
+          timer_set_oc_mode(TIM3, TIM_OC3, TIM_OCM_FORCE_LOW);
+          u16_timer += 15000;
         }
       }
 
@@ -371,6 +403,65 @@ extern "C" void tim3_isr(void) {
       timer_set_oc_value(TIM3, TIM_OC3, u16_timer);
     }
     timer_clear_flag(TIM3, TIM_SR_CC3IF);
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+
+extern "C" void usb_lp_can_rx0_isr(void) {
+  o_usb.poll();
+}
+
+/*----------------------------------------------------------------------------*/
+// When host computer writes data to usbuart
+void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep) {
+  // Read usb packet data
+  uint8_t pu8_buffer[CDCACM_PACKET_SIZE];
+  uint8_t u8_data;
+  int i_length;
+
+  i_length = usbd_ep_read_packet(ps_dev, u8_ep, pu8_buffer, CDCACM_PACKET_SIZE);
+  for (int i = 0; i < i_length; i++) {
+    u8_data = pu8_buffer[i];
+    o_cmdIn.writeByte(u8_data);
+    if (u8_data == '\n') {
+      o_queue.put(EVENT_USART_IN, 0);
+    }
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+// When usbuart writes data to host computer
+void usbuart_usb_out_cb(usbd_device *ps_usbDev, uint8_t u8_ep) {
+  uint8_t pu8_buffer[CDCACM_PACKET_SIZE];
+  int i_length;
+  int c;
+
+  if (o_usb.cdcacm_get_config() != 1) {
+    return;
+  }
+
+  i_length = 0;
+  while ((c = o_usb._o_out.readByte()) != -1) {
+    pu8_buffer[i_length++] = (uint8_t) c;
+    if (i_length == CDCACM_PACKET_SIZE) {
+      break;
+    }
+  }
+
+  if (i_length > 0) {
+    while (usbd_ep_write_packet(ps_usbDev, u8_ep, pu8_buffer, i_length) <= 0) {
+    }
+    /*
+     * We need to send an empty packet for some hosts to accept this as a
+     * complete transfer. libopencm3 needs a change for us to confirm when that
+     * transfer is complete, so we just send a packet containing a null byte for
+     * now.
+     */
+    if (i_length == CDCACM_PACKET_SIZE && !o_usb._o_out.hasNext()) {
+      while (usbd_ep_write_packet(ps_usbDev, u8_ep, "", 1) <= 0) {
+      }
+    }
   }
 }
 
@@ -387,7 +478,7 @@ void recvUsart() {
   int c;
 
   pc_dst = pc_commandLine;
-  while ((c = o_usartIn.readByte()) != -1) {
+  while ((c = o_cmdIn.readByte()) != -1) {
     if (c == '\n') {
       break;
     }
@@ -406,16 +497,16 @@ void recvUsart() {
   if (memcmp(pc_commandLine, "10;", 3) == 0) {
     pc_src = &pc_commandLine[3];
     if (memcmp(pc_src, "PING;", 5) == 0) {
-      o_usart.printf("20;%02X;PONG;\n", u8_sequenceNumber++);
+      o_usb.printf("20;%02X;PONG;\r\n", u8_sequenceNumber++);
     } else if (memcmp(pc_src, "VERSION;", 8) == 0) {
-      o_usart.printf("20;%02X;VER=0.1;REV=%02x;BUILD=%02x;\n",
-                     u8_sequenceNumber++, 0x07, 0x33);
+      o_usb.printf("20;%02X;VER=0.1;REV=%02x;BUILD=%02x;\r\n",
+                   u8_sequenceNumber++, 0x07, 0x33);
     } else if (memcmp(pc_src, "RFDEBUG=O", 9) == 0) {
       b_rfDebug = pc_src[9] == 'N';
-      o_usart.printf("20;%02X;RFDEBUG=%s;\n", u8_sequenceNumber++,
-                     b_rfDebug ? "ON" : "OFF");
+      o_usb.printf("20;%02X;RFDEBUG=%s;\r\n", u8_sequenceNumber++,
+                   b_rfDebug ? "ON" : "OFF");
     } else if (memcmp(pc_src, "RFDUMP", 6) == 0) {
-      o_rfm69.dumpRegisters(o_usart);
+      o_rfm69.dumpRegisters(o_usb);
     } else {
       getParamAsString(&pc_src, &pc_type);
 
@@ -476,12 +567,12 @@ void recvRfStop() {
   i_pulses = s_rawSignalIn.u16_pulses;
   if (i_pulses > MIN_RAW_PULSES) {
     if (b_rfDebug) {
-      o_usart.printf("20;%02X;DEBUG;Pulses=%d;Pulses(uSec)=",
-                     u8_sequenceNumber++, i_pulses);
+      o_usb.printf("20;%02X;DEBUG;Pulses=%d;Pulses(uSec)=", u8_sequenceNumber++,
+                   i_pulses);
 
       for (i = 0; i < i_pulses; i++) {
-        o_usart.printf(i == i_pulses - 1 ? "%d;\n" : "%d,",
-                       s_rawSignalIn.pu16_pulses[i] * 10);
+        o_usb.printf(i == i_pulses - 1 ? "%d;\n" : "%d,",
+                     s_rawSignalIn.pu16_pulses[i] * 10);
       }
     }
 
@@ -507,7 +598,7 @@ void recvRfStop() {
 
 void sendRfStart() {
   // If reception is ongoing, wait until state is IDLE or LISTENING
-  while (e_state != IDLE && e_state != LISTENING) {
+  while (e_state != IDLE && e_state != LISTENING && e_state != PROCESSING) {
     asm("wfi");
   }
 
@@ -547,24 +638,26 @@ void setup() {
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO0);
   gpio_clear(GPIOA, GPIO0);
 
+#ifdef USART_DEBUG
   // Init USART device on A9-TX and A10-RX
   nvic_enable_irq(NVIC_USART1_IRQ);
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
                 GPIO_USART1_TX);
   gpio_set_mode(GPIOA, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO_USART1_RX);
-
-  //   o_usartIn.init(pu8_usartIn, sizeof(pu8_usartIn));
-  //   o_usartOut.init(pu8_usartOut, sizeof(pu8_usartOut));
+#endif
 
   o_queue.init();
+  o_usb.init();
 
+#ifdef USART_DEBUG
   o_usart.init(USART1_BASE);
   o_usart.enableRxInterrupt();
   o_usart.enable();
+#endif
 
   //   o_usart.puts("USART initialized\n");
-  o_usart.printf("20;%02X;Nodo RadioFrequencyLink - RFSkipper V0.1 - R%02d;\n",
-                 u8_sequenceNumber++, 13);
+  o_usb.printf("20;%02X;Nodo RadioFrequencyLink - RFSkipper V0.1 - R%02d;\r\n",
+               u8_sequenceNumber++, 13);
 
   pluginsInitialization();
 
@@ -591,8 +684,8 @@ void setup() {
   gpio_set(GPIOC, GPIO13);
 
   i_rssiAverage /= 1024;
-  o_usart.printf("20;%02X;DEBUG;RFM69 calibrated RSSI=%d\n",
-                 u8_sequenceNumber++, i_rssiAverage);
+  o_usb.printf("20;%02X;DEBUG;RFM69 calibrated RSSI=%d\r\n",
+               u8_sequenceNumber++, i_rssiAverage);
 
   // should be average RSSI when no signal + 20dB (~ -80dB)
   o_rfm69.setFixedThreshold(i_rssiAverage + 20);
@@ -607,18 +700,6 @@ void loop() {
 
   if (o_queue.isEmpty()) {
     __asm("wfi");
-  }
-
-  // test for reception timeout
-  if (e_state == RECEIVING && u32_txTimeout != 0 && millis() >= u32_txTimeout) {
-    u32_txTimeout = 0;
-
-    timer_ic_disable(TIM3, TIM_IC3);
-    timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
-
-    if (testAndSetState(e_state, RECEIVING, PROCESSING) == 0) {
-      o_queue.put(EVENT_RF_STOP_IN, 0);
-    }
   }
 
   if (!o_queue.isEmpty()) {

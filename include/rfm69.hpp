@@ -6,7 +6,7 @@
 
 #include "standard.hpp"
 #include "spi.hpp"
-#include "usart.hpp"
+#include "usb.hpp"
 #include "rfm69_registers.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -137,7 +137,7 @@ public:
   void reset();
   void rcCalibration();
   bool setAESEncryption(const uint8_t *pu8_aesKey, int i_keyLength);
-  void dumpRegisters(USART &o_usart);
+  void dumpRegisters(USB &o_usb);
   inline uint8_t getVersion() { return readRegister(REG_VERSION); }
 
 public:

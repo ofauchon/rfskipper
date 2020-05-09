@@ -8,7 +8,7 @@
 #ifndef _WIN32
 #include "radio.hpp"
 #else
-#include "regression.H"
+#include "regression.hpp"
 #endif
 
 /*----------------------------------------------------------------------------*/
@@ -56,6 +56,8 @@ extern const uint8_t u8_plugins;
 
 extern void pluginsInitialization();
 
+extern int output(const char *pc_pluginName, const char *pc_format, ...);
+
 extern bool getParamAsString(char **ppc_start, const char **ppc_value);
 extern bool getParamAsDec(char **ppc_start, int *pi_value);
 extern bool getParamAsHex(char **ppc_start, int *pi_value);
@@ -71,6 +73,7 @@ extern PluginFunction plugin099Tx;
 extern CommandFunction plugin099Show;
 extern CommandFunction plugin099Clean;
 extern void plugin099Init();
+extern PluginFunction plugin255Rx;
 
 /*----------------------------------------------------------------------------*/
 
