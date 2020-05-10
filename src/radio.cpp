@@ -296,7 +296,7 @@ void timer3SetupOutputCompare(uint16_t u16_autoReload, uint16_t u16_prescaler) {
   gpio_set_mode(GPIO_BANK_TIM3_CH3, GPIO_MODE_OUTPUT_50_MHZ,
                 GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_TIM3_CH3);
 
-  timer_set_prescaler(TIM3, 720);
+  timer_set_prescaler(TIM3, u16_prescaler);
   timer_set_period(TIM3, u16_autoReload);
 
   /*
@@ -426,41 +426,6 @@ void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep) {
     o_cmdIn.writeByte(u8_data);
     if (u8_data == '\n') {
       o_queue.put(EVENT_USART_IN, 0);
-    }
-  }
-}
-
-/*----------------------------------------------------------------------------*/
-// When usbuart writes data to host computer
-void usbuart_usb_out_cb(usbd_device *ps_usbDev, uint8_t u8_ep) {
-  uint8_t pu8_buffer[CDCACM_PACKET_SIZE];
-  int i_length;
-  int c;
-
-  if (o_usb.cdcacm_get_config() != 1) {
-    return;
-  }
-
-  i_length = 0;
-  while ((c = o_usb._o_out.readByte()) != -1) {
-    pu8_buffer[i_length++] = (uint8_t) c;
-    if (i_length == CDCACM_PACKET_SIZE) {
-      break;
-    }
-  }
-
-  if (i_length > 0) {
-    while (usbd_ep_write_packet(ps_usbDev, u8_ep, pu8_buffer, i_length) <= 0) {
-    }
-    /*
-     * We need to send an empty packet for some hosts to accept this as a
-     * complete transfer. libopencm3 needs a change for us to confirm when that
-     * transfer is complete, so we just send a packet containing a null byte for
-     * now.
-     */
-    if (i_length == CDCACM_PACKET_SIZE && !o_usb._o_out.hasNext()) {
-      while (usbd_ep_write_packet(ps_usbDev, u8_ep, "", 1) <= 0) {
-      }
     }
   }
 }

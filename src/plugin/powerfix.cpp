@@ -16,6 +16,8 @@ const char *const ppc_PowerFixCmd[] = { "OFF", "ON",     "BRIGHT",
 
 bool plugin013Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) pc_cmd;
+
   uint16_t *pu16_pulses;
   uint16_t u16_pulse;
   uint32_t u32_bitStream;

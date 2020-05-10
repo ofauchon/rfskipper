@@ -12,9 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "eeprom.hpp"
 #include "plugin.hpp"
 #include "rfm69.hpp"
+#include "eeprom.hpp"
 
 /*----------------------------------------------------------------------------*/
 
@@ -45,6 +45,8 @@ EEPROM o_somfyEeprom;
 
 bool plugin099Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) pc_cmd;
+
   SomfyFrame s_frame;
   uint32_t u32_address;
   uint16_t *pu16_pulse;
@@ -142,6 +144,8 @@ bool plugin099Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
 
 bool plugin099Tx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) ps_plugin;
+
   SomfyFrame s_frame;
   uint16_t u16_rollingCode;
   uint16_t *pu16_pulse;
@@ -287,6 +291,9 @@ void plugin099Init() {
 /*----------------------------------------------------------------------------*/
 
 void plugin099Show(const Command *ps_plugin, const char *pc_option) {
+  (void) ps_plugin;
+  (void) pc_option;
+
   uint8_t u8_kSize;
   uint8_t u8_dSize;
   void *pv_handle;
@@ -307,6 +314,9 @@ void plugin099Show(const Command *ps_plugin, const char *pc_option) {
 /*----------------------------------------------------------------------------*/
 
 void plugin099Clean(const Command *ps_plugin, const char *pc_option) {
+  (void) ps_plugin;
+  (void) pc_option;
+
   o_somfyEeprom.clear();
 }
 

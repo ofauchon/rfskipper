@@ -8,7 +8,6 @@
 #include <libopencm3/cm3/nvic.h>
 
 #include "version.h"
-#include "ring.hpp"
 
 /* Exported constants --------------------------------------------------------*/
 
@@ -48,7 +47,6 @@ private:
 
 public:
   static char _pc_serialNumber[9];
-  RING<256> _o_out;
 
 private:
   static void cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value);

@@ -329,10 +329,31 @@ int USB::puts(const char *pc_string) {
 // When usbuart writes data to host computer
 void USB::usbuart_usb_out(uint8_t u8_endPoint, uint8_t *pu8_buffer,
                           int i_size) {
-  for (int i = 0; i < i_size; i++) {
-    _o_out.writeByte(*pu8_buffer++);
+  int i_length;
+
+  if (cdcacm_get_config() != 1) {
+    return;
   }
-  usbuart_usb_out_cb(_ps_usbDev, u8_endPoint);
+
+  while (i_size > 0) {
+    i_length = i_size > CDCACM_PACKET_SIZE ? CDCACM_PACKET_SIZE : i_size;
+    while (usbd_ep_write_packet(_ps_usbDev, u8_endPoint, pu8_buffer,
+                                i_length) <= 0) {
+    }
+    pu8_buffer += i_length;
+    i_size -= i_length;
+  }
+
+  /*
+   * We need to send an empty packet for some hosts to accept this as a
+   * complete transfer. libopencm3 needs a change for us to confirm when that
+   * transfer is complete, so we just send a packet containing a null byte for
+   * now.
+   */
+  if (i_length == CDCACM_PACKET_SIZE) {
+    while (usbd_ep_write_packet(_ps_usbDev, u8_endPoint, "", 1) <= 0) {
+    }
+  }
 }
 
 /*----------------------------------------------------------------------------*/
@@ -388,22 +409,17 @@ void USB::cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value) {
   // USB EP address: 0x01 to read and 0x81 to write
   usbd_ep_setup(ps_dev, 0x01, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
                 usbuart_usb_in_cb);
-  usbd_ep_setup(ps_dev, 0x81, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
-                usbuart_usb_out_cb);
+  usbd_ep_setup(ps_dev, 0x81, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, NULL);
   usbd_ep_setup(ps_dev, 0x82, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
   usbd_ep_setup(ps_dev, 0x03, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
                 usbuart_usb_in_cb);
-  usbd_ep_setup(ps_dev, 0x83, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
-                usbuart_usb_out_cb);
+  usbd_ep_setup(ps_dev, 0x83, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, NULL);
   usbd_ep_setup(ps_dev, 0x84, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
   usbd_register_control_callback(
     ps_dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
-    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT,
-    (int (*)(
-      _usbd_device *, usb_setup_data *, unsigned char **, short unsigned int *,
-      int (**)(_usbd_device *, usb_setup_data *))) USB::cdcacm_control_request);
+    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, USB::cdcacm_control_request);
 
   /* Notify the host that DCD is asserted.
    * Allows the use of /dev/tty* devices on *BSD/MacOS

@@ -15,6 +15,8 @@ const char *const ppc_KAKUCmd[] = { "OFF", "ON", "ALLOFF", "ALLON" };
 
 bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) pc_cmd;
+
   uint32_t u32_bitStream;
   uint16_t *pu16_pulse;
   // bool b_dimPresent;
@@ -93,6 +95,8 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
 
 bool plugin004Tx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) ps_plugin;
+
   register uint32_t u32_bitStream;
   register uint16_t *pu16_pulse;
   uint32_t u32_mask;

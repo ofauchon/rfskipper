@@ -4,6 +4,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include <libopencm3/stm32/flash.h>
 

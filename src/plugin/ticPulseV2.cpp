@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "plugin.hpp"
 #include "decoder.hpp"
+#include "plugin.hpp"
 
 /*----------------------------------------------------------------------------*/
 
@@ -13,6 +13,8 @@
 
 bool plugin255Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) pc_cmd;
+
   uint32_t u32_bitStream;
   uint32_t u32_serial;
   uint32_t u32_counter;

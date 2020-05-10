@@ -42,6 +42,9 @@ uint32_t readNibble(uint8_t *pu8_data, int i_offset, int i_nibbles) {
 
 bool plugin048Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
                  char *pc_cmd) {
+  (void) ps_plugin;
+  (void) pc_cmd;
+
   uint16_t *pu16_pulses;
   uint16_t u16_pulses;
   uint8_t pu8_rawSignal[16];

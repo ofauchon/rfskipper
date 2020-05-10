@@ -74,6 +74,8 @@ uint8_t EventQueue::get() {
 /*----------------------------------------------------------------------------*/
 
 int EventQueue::put(uint8_t u8_event, uint8_t u8_priority) {
+  (void) u8_priority;
+
   int32_t i_parent;
   int32_t i_node;
   uint8_t u8_swap;
