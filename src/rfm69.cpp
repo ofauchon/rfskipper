@@ -1003,14 +1003,12 @@ void RFM69::setBitRate(uint32_t u32_bitrate) {
  * Symbol 'DEBUG' has to be defined.
  */
 void RFM69::dumpRegisters(USB &o_usb) {
-#ifdef DEBUG
   uint8_t u8_value;
 
   for (uint i = 1; i <= 0x71; i++) {
     u8_value = readRegister(i);
     o_usb.printf("[0x%02X]: 0x%02X 0b%08b\r\n", i, u8_value, u8_value);
   }
-#endif
 }
 
 /*----------------------------------------------------------------------------*/

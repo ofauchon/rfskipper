@@ -585,15 +585,35 @@ void sendRfStop() {
 }
 
 /*----------------------------------------------------------------------------*/
+
+void fatalError(uint8_t u8_code) {
+  uint8_t u8_startMask;
+  uint8_t u8_mask;
+
+  u8_startMask = 0x80;
+  while ((u8_code & u8_startMask) == 0 && u8_startMask > 0x04) {
+    u8_startMask >>= 1;
+  }
+
+  for (;;) {
+    for (u8_mask = u8_startMask; u8_mask != 0; u8_mask >>= 1) {
+      gpio_clear(GPIOC, GPIO13);
+      msleep((u8_code & u8_mask) ? 1500 : 500);
+      gpio_set(GPIOC, GPIO13);
+      msleep(500);
+    }
+    msleep(3000);
+  }
+}
+
+/*----------------------------------------------------------------------------*/
 /*
  * Setup the RFM69 based on http://members.home.nl/hilcoklaassen/
  * Also see:
  * https://acassis.wordpress.com/2016/04/19/getting-started-with-rfm69/
  */
 void setup() {
-  //  uint8_t u8_version;
-
-  timer3Init();
+  uint8_t u8_version;
 
   // LED on BluePill F103 is PC13
   gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
@@ -602,6 +622,8 @@ void setup() {
   // Setup GPIO pin A0 to reset the RFM69
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL, GPIO0);
   gpio_clear(GPIOA, GPIO0);
+
+  timer3Init();
 
 #ifdef USART_DEBUG
   // Init USART device on A9-TX and A10-RX
@@ -633,11 +655,14 @@ void setup() {
   o_rfm69.setBitRate(RFM69_BITRATE_TO_REG(32000));
   o_rfm69.setOOKPeak(RF_OOKPEAK_THRESHTYPE_FIXED);
   o_rfm69.setMode(RFM69_MODE_RX);
-
   o_rfm69.setRssiThreshold(-127);
-  //  u8_version = o_rfm69.getVersion();
-  //  o_usart.printf("RFM69 version %d-%d\n", u8_version >> 4, u8_version &
-  //  0x0f);
+
+  u8_version = o_rfm69.getVersion();
+  if (u8_version != 0x24) {
+    o_usb.puts("Couldn't detect RFM69 device\r\n");
+    fatalError(1);
+  }
+
   int i_rssiAverage = 0;
   for (int i_loop = 0; i_loop < 1024; i_loop++) {
     if ((i_loop & 0x3F) == 0) {
