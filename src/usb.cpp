@@ -329,7 +329,7 @@ int USB::puts(const char *pc_string) {
 // When usbuart writes data to host computer
 void USB::usbuart_usb_out(uint8_t u8_endPoint, uint8_t *pu8_buffer,
                           int i_size) {
-  int i_length;
+  int i_length=0;
 
   if (cdcacm_get_config() != 1) {
     return;
