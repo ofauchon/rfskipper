@@ -64,7 +64,7 @@ bool getParamAsString(char **ppc_start, const char **ppc_value) {
   }
 
   *ppc_value = pc_src;
-  while (*pc_src != ';') {
+  while (*pc_src != ';' && *pc_src != 0) {
     pc_src++;
   }
   *pc_src++ = 0;
@@ -77,17 +77,18 @@ bool getParamAsString(char **ppc_start, const char **ppc_value) {
 /*----------------------------------------------------------------------------*/
 
 bool getParamAsDec(char **ppc_start, int *pi_value) {
+  bool b_negative;
   char *pc_src;
   int i_value;
   char c;
 
   pc_src = *ppc_start;
-  if (*pc_src == 0) {
-    return false;
+  if ((b_negative = (*pc_src == '-'))) {
+    pc_src++;
   }
 
   i_value = 0;
-  while ((c = *pc_src++) != ';') {
+  while ((c = *pc_src++) != ';' && c != 0) {
     i_value *= 10;
     if (c >= '0' && c <= '9') {
       i_value += c - '0';
@@ -96,7 +97,7 @@ bool getParamAsDec(char **ppc_start, int *pi_value) {
     }
   }
 
-  *pi_value = i_value;
+  *pi_value = b_negative ? -i_value : i_value;
   *ppc_start = pc_src;
 
   return true;

@@ -59,6 +59,7 @@ typedef enum _Rfm69State {
 
 // clang-format off
 const Command ps_commands[] = {
+   { "SETPARM", setParameter },
    { "RTSSHOW", plugin099Show },
    { "RTSCLEAN", plugin099Clean }
 };
@@ -426,6 +427,26 @@ void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep) {
     o_cmdIn.writeByte(u8_data);
     if (u8_data == '\n') {
       o_queue.put(EVENT_USART_IN, 0);
+    }
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+
+void setParameter(const Command *ps_command, const char *pc_args) {
+  (void) ps_command;
+
+  char *pc_option;
+
+  if (!getParamAsString((char **) &pc_args, (const char **) &pc_option)) {
+    return;
+  }
+
+  if (memcmp(pc_option, "RSSI", 4) == 0) {
+    int i_rssi;
+
+    if (getParamAsDec((char **) &pc_args, &i_rssi)) {
+      o_rfm69.setFixedThreshold(i_rssi);
     }
   }
 }

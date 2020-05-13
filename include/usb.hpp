@@ -3,6 +3,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include <stdarg.h>
+
 #include <libopencm3/usb/usbd.h>
 #include <libopencm3/usb/cdc.h>
 #include <libopencm3/cm3/nvic.h>

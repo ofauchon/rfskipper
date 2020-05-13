@@ -93,9 +93,9 @@ static const uint8_t g_ppu8_rfm69BaseConfig[][2] = {
    // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4khz)
    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_200 | RF_LNA_GAINSELECT_AUTO }, //LNA input impedance 200 Ohm, auto gain select
    /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_001 | RF_RXBW_MANT_20 | RF_RXBW_EXP_1 }, // 20 en 5 berekend
-   /* 0x1B */ { REG_OOKPEAK, RF_OOKPEAK_THRESHTYPE_PEAK | RF_OOKPEAK_PEAKTHRESHSTEP_000 | RF_OOKPEAK_PEAKTHRESHDEC_000 }, //74
+   /* 0x1B */ { REG_OOKPEAK, RF_OOKPEAK_THRESHTYPE_FIXED | RF_OOKPEAK_PEAKTHRESHSTEP_000 | RF_OOKPEAK_PEAKTHRESHDEC_000 }, //74
    //* 0x1C */ { REG_OOKAVG, 0x80 },//80   //Geen idee waarvoor
-   /* 0x1D */ { REG_OOKFIX, 6 }, //0   //zie pagina 30
+//   /* 0x1D */ { REG_OOKFIX, 6 }, //0   //zie pagina 30 (default is 6)
    /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_00 | RF_DIOMAPPING1_DIO3_01 }, //DIO0 is the only IRQ we're using
    /* 0x26 */ { REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF }, // DIO5 ClkOut disable for power saving
    /* 0x28 */ { REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN }, // Writing to this bit ensures the FIFO & status flags are reset
