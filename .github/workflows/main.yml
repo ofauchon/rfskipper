@@ -3,7 +3,9 @@ name: build
 on: 
   push:
     branches: 
-      - master
+      - 'releases/**'
+    tags:
+      - v0.*
 
 jobs:
   main:
