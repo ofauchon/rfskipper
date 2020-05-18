@@ -76,8 +76,8 @@ endRnzEncoding:
   u32_counter = (u32_counter << 8) + pu8_rawSignal[8];
   u16_power = (pu8_rawSignal[17] << 8) + pu8_rawSignal[16];
 
-  output(ps_plugin->pc_name, "ID=%02x%08x;COUNT=%x;POWER=%04x;",
-         pu8_rawSignal[2], u32_serial, u32_counter, u16_power);
+  fPfxOutput(ps_plugin->pc_name, "ID=%02x%08x;COUNT=%x;POWER=%04x;",
+             pu8_rawSignal[2], u32_serial, u32_counter, u16_power);
 
   return true;
 }

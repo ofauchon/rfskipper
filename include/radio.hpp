@@ -3,14 +3,16 @@
 
 /*----------------------------------------------------------------------------*/
 
-#include "usb.hpp"
+#include "usb.h"
+#ifdef USART_ENABLE
 #include "usart.hpp"
+#endif
 
 /*----------------------------------------------------------------------------*/
 
-extern USB o_usb;
+#ifdef USART_ENABLE
 extern USART o_usart;
-extern uint8_t u8_sequenceNumber;
+#endif
 
 /*----------------------------------------------------------------------------*/
 

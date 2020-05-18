@@ -33,28 +33,6 @@ void pluginsInitialization() {
 
 /*----------------------------------------------------------------------------*/
 
-int output(const char *pc_origin, const char *pc_format, ...) {
-  char pc_message[128];
-  va_list s_args;
-  int i_length;
-
-  i_length = sprintf(pc_message, "20;%02X;%s;", u8_sequenceNumber++, pc_origin);
-
-  va_start(s_args, pc_format);
-  i_length += vsprintf(&pc_message[i_length], pc_format, s_args);
-  va_end(s_args);
-
-  pc_message[i_length++] = '\r';
-  pc_message[i_length++] = '\n';
-  pc_message[i_length] = 0;
-
-  o_usb.puts(pc_message);
-
-  return i_length;
-}
-
-/*----------------------------------------------------------------------------*/
-
 bool getParamAsString(char **ppc_start, const char **ppc_value) {
   char *pc_src;
 
@@ -88,7 +66,7 @@ bool getParamAsDec(char **ppc_start, int *pi_value) {
   }
 
   i_value = 0;
-  while ((c = *pc_src++) != ';' && c != 0) {
+  while ((c = *pc_src++) != ';') {
     i_value *= 10;
     if (c >= '0' && c <= '9') {
       i_value += c - '0';

@@ -2,7 +2,20 @@
 
 /*----------------------------------------------------------------------------*/
 
+#include <stddef.h>
+
 #include "utils.hpp"
+#ifdef USB_ENABLE
+#include "usb.h"
+#endif
+#ifdef USART_ENABLE
+#include "usart.hpp"
+#include "radio.hpp"
+#endif
+
+/*----------------------------------------------------------------------------*/
+
+uint8_t u8_sequenceNumber = 0;
 
 /*----------------------------------------------------------------------------*/
 
@@ -169,6 +182,57 @@ int sprintf(char *pc_message, const char *pc_format, ...) {
   va_end(s_args);
 
   return i_length;
+}
+
+/*----------------------------------------------------------------------------*/
+
+void output(const char *pc_message, int i_length) {
+#ifdef USB_ENABLE
+  usbOutput(pc_message, i_length);
+#endif
+#ifdef USART_ENABLE
+  o_usart.output(pc_message, i_length);
+#endif
+}
+
+/*----------------------------------------------------------------------------*/
+
+void fPfxOutput(const char *pc_origin, const char *pc_format, ...) {
+  char pc_message[128];
+  va_list s_args;
+  int i_length;
+
+  if (pc_origin != NULL) {
+    i_length =
+      sprintf(pc_message, "20;%02X;%s;", u8_sequenceNumber++, pc_origin);
+  } else {
+    i_length = sprintf(pc_message, "20;%02X;", u8_sequenceNumber++);
+  }
+
+  if (pc_format != NULL) {
+    va_start(s_args, pc_format);
+    i_length += vsprintf(&pc_message[i_length], pc_format, s_args);
+    va_end(s_args);
+  }
+
+  pc_message[i_length++] = '\r';
+  pc_message[i_length++] = '\n';
+
+  output(pc_message, i_length);
+}
+
+/*----------------------------------------------------------------------------*/
+
+void fOutput(const char *pc_format, ...) {
+  char pc_message[128];
+  va_list s_args;
+  int i_length;
+
+  va_start(s_args, pc_format);
+  i_length = vsprintf(pc_message, pc_format, s_args);
+  va_end(s_args);
+
+  output(pc_message, i_length);
 }
 
 /*----------------------------------------------------------------------------*/

@@ -85,8 +85,9 @@ bool plugin004Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
 
   i = (u32_bitStream >> 4) & 0x03;
 
-  output(ps_plugin->pc_name, "ID=%08x;SWITCH=%x;CMD=%s;",
-         ((u32_bitStream) >> 6), ((u32_bitStream) &0x0f) + 1, ppc_KAKUCmd[i]);
+  fPfxOutput(ps_plugin->pc_name, "ID=%08x;SWITCH=%x;CMD=%s;",
+             ((u32_bitStream) >> 6), ((u32_bitStream) &0x0f) + 1,
+             ppc_KAKUCmd[i]);
 
   return true;
 }

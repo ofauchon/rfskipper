@@ -9,20 +9,17 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <libopencm3/usb/usbd.h>
-#include <libopencm3/usb/cdc.h>
-
-#include "usb.hpp"
-#include "utils.hpp"
+#include "usb.h"
 
 /*----------------------------------------------------------------------------*/
 
-char USB::_pc_serialNumber[9];
-int USB::_i_configured;
+static uint8_t pu8_usbdControlBuffer[256];
+static char pc_serialNumber[9];
+static int i_configured;
+static usbd_device *ps_usbDev;
 
 static const char *ppc_usbStrings[] = { "RFSkipper", BOARD_IDENT,
-                                        USB::_pc_serialNumber,
-                                        "RFSkipper Debug Port",
+                                        pc_serialNumber, "RFSkipper Debug Port",
                                         "RFSkipper Proto Port" };
 
 static const struct usb_endpoint_descriptor uart_comm_endp1[] = { {
@@ -299,67 +296,30 @@ static const struct usb_config_descriptor s_configDesc = {
 };
 
 /*----------------------------------------------------------------------------*/
+//
+// int printf(const char *pc_format, ...) {
+//  char pc_message[128];
+//  va_list s_args;
+//  int i_length;
+//
+//  va_start(s_args, pc_format);
+//  i_length = vsprintf(pc_message, pc_format, s_args);
+//  va_end(s_args);
+//
+//  usbuart_usb_out(CDCACM_CMD_ENDPOINT, (uint8_t *) pc_message, i_length);
+//
+//  return i_length;
+//}
+//
+/*----------------------------------------------------------------------------*/
 
-int USB::printf(const char *pc_format, ...) {
-  char pc_message[128];
-  va_list s_args;
-  int i_length;
-
-  va_start(s_args, pc_format);
-  i_length = vsprintf(pc_message, pc_format, s_args);
-  va_end(s_args);
-
-  usbuart_usb_out(CDCACM_CMD_ENDPOINT, (uint8_t *) pc_message, i_length);
-
-  return i_length;
+inline static int cdcacm_get_config(void) {
+  return i_configured;
 }
 
 /*----------------------------------------------------------------------------*/
-
-int USB::puts(const char *pc_string) {
-  int i_length;
-
-  i_length = strlen(pc_string);
-  usbuart_usb_out(CDCACM_CMD_ENDPOINT, (uint8_t *) pc_string, i_length);
-
-  return i_length;
-}
-
-/*----------------------------------------------------------------------------*/
-// When usbuart writes data to host computer
-void USB::usbuart_usb_out(uint8_t u8_endPoint, uint8_t *pu8_buffer,
-                          int i_size) {
-  int i_length=0;
-
-  if (cdcacm_get_config() != 1) {
-    return;
-  }
-
-  while (i_size > 0) {
-    i_length = i_size > CDCACM_PACKET_SIZE ? CDCACM_PACKET_SIZE : i_size;
-    while (usbd_ep_write_packet(_ps_usbDev, u8_endPoint, pu8_buffer,
-                                i_length) <= 0) {
-    }
-    pu8_buffer += i_length;
-    i_size -= i_length;
-  }
-
-  /*
-   * We need to send an empty packet for some hosts to accept this as a
-   * complete transfer. libopencm3 needs a change for us to confirm when that
-   * transfer is complete, so we just send a packet containing a null byte for
-   * now.
-   */
-  if (i_length == CDCACM_PACKET_SIZE) {
-    while (usbd_ep_write_packet(_ps_usbDev, u8_endPoint, "", 1) <= 0) {
-    }
-  }
-}
-
-/*----------------------------------------------------------------------------*/
-
-void USB::cdcacm_set_modem_state(usbd_device *ps_dev, int i_itf, bool dsr,
-                                 bool dcd) {
+void cdcacm_set_modem_state(usbd_device *ps_dev, int i_itf, bool dsr,
+                            bool dcd) {
   const int i_notifSize = sizeof(struct usb_cdc_notification) + 2;
   uint8_t pu8_buffer[i_notifSize];
   struct usb_cdc_notification *ps_notif;
@@ -382,7 +342,7 @@ void USB::cdcacm_set_modem_state(usbd_device *ps_dev, int i_itf, bool dsr,
 
 /*----------------------------------------------------------------------------*/
 
-enum usbd_request_return_codes USB::cdcacm_control_request(
+enum usbd_request_return_codes cdcacm_control_request(
   usbd_device *ps_dev, struct usb_setup_data *ps_req, uint8_t **ppu8_buf,
   uint16_t *pu16_len,
   void (**ppf_complete)(usbd_device *, struct usb_setup_data *)) {
@@ -403,8 +363,8 @@ enum usbd_request_return_codes USB::cdcacm_control_request(
 
 /*----------------------------------------------------------------------------*/
 
-void USB::cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value) {
-  _i_configured = u16_value;
+void cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value) {
+  i_configured = u16_value;
 
   // USB EP address: 0x01 to read and 0x81 to write
   usbd_ep_setup(ps_dev, 0x01, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
@@ -419,39 +379,95 @@ void USB::cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value) {
 
   usbd_register_control_callback(
     ps_dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
-    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, USB::cdcacm_control_request);
+    USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, cdcacm_control_request);
 
   /* Notify the host that DCD is asserted.
    * Allows the use of /dev/tty* devices on *BSD/MacOS
    */
-  USB::cdcacm_set_modem_state(ps_dev, 0, true, true);
-  USB::cdcacm_set_modem_state(ps_dev, 2, true, true);
+  cdcacm_set_modem_state(ps_dev, 0, true, true);
+  cdcacm_set_modem_state(ps_dev, 2, true, true);
 }
 
 /*----------------------------------------------------------------------------*/
 
-void USB::readSerialNumber(void) {
+void readSerialNumber(void) {
   uint32_t *pu32_cpuId = (uint32_t *) 0x1FFFF7E8;
   uint32_t u32_uniqueId;
+  char *pc;
+  uint8_t u8;
+  int i;
 
   u32_uniqueId = pu32_cpuId[0] + pu32_cpuId[1] + pu32_cpuId[2];
-  sprintf(_pc_serialNumber, "%08x", u32_uniqueId);
+
+  pc = pc_serialNumber;
+  for (i = 0; i < sizeof(u32_uniqueId); i++) {
+    u8 = u32_uniqueId & 0xf;
+    if (u8 >= 10) {
+      *pc++ = u8 - 10 + 'A';
+    } else {
+      *pc++ = u8 + '0';
+    }
+    u32_uniqueId >>= 4;
+  }
+  *pc = 0;
 }
 
 /*----------------------------------------------------------------------------*/
 
-void USB::init(void) {
+void usbPoll(void) {
+  usbd_poll(ps_usbDev);
+}
+
+/*----------------------------------------------------------------------------*/
+
+void usbInit(void) {
   readSerialNumber();
 
-  _ps_usbDev =
-    usbd_init(&USB_DRIVER, &s_devDesc, &s_configDesc, ppc_usbStrings,
-              sizeof(ppc_usbStrings) / sizeof(char **), _pu8_usbdControlBuffer,
-              sizeof(_pu8_usbdControlBuffer));
+  ps_usbDev = usbd_init(&USB_DRIVER, &s_devDesc, &s_configDesc, ppc_usbStrings,
+                        sizeof(ppc_usbStrings) / sizeof(char **),
+                        pu8_usbdControlBuffer, sizeof(pu8_usbdControlBuffer));
 
-  usbd_register_set_config_callback(_ps_usbDev, cdcacm_set_config);
+  usbd_register_set_config_callback(ps_usbDev, cdcacm_set_config);
 
   nvic_set_priority(USB_IRQ, IRQ_PRI_USB);
   nvic_enable_irq(USB_IRQ);
+}
+
+/*----------------------------------------------------------------------------*/
+// When usbuart writes data to host computer
+void usbuart_usb_out(uint8_t u8_endPoint, uint8_t *pu8_buffer, int i_size) {
+  int i_length;
+
+  if (cdcacm_get_config() != 1) {
+    return;
+  }
+
+  i_length = 0;
+  while (i_size > 0) {
+    i_length = i_size > CDCACM_PACKET_SIZE ? CDCACM_PACKET_SIZE : i_size;
+    while (usbd_ep_write_packet(ps_usbDev, u8_endPoint, pu8_buffer, i_length) <=
+           0) {
+    }
+    pu8_buffer += i_length;
+    i_size -= i_length;
+  }
+
+  /*
+   * We need to send an empty packet for some hosts to accept this as a
+   * complete transfer. libopencm3 needs a change for us to confirm when that
+   * transfer is complete, so we just send a packet containing a null byte for
+   * now.
+   */
+  if (i_length == CDCACM_PACKET_SIZE) {
+    while (usbd_ep_write_packet(ps_usbDev, u8_endPoint, "", 1) <= 0) {
+    }
+  }
+}
+
+/*----------------------------------------------------------------------------*/
+
+void usbOutput(const char *pc_string, int i_length) {
+  usbuart_usb_out(CDCACM_CMD_ENDPOINT, (uint8_t *) pc_string, i_length);
 }
 
 /*----------------------------------------------------------------------------*/

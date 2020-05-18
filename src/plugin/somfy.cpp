@@ -15,6 +15,7 @@
 #include "plugin.hpp"
 #include "rfm69.hpp"
 #include "eeprom.hpp"
+#include "utils.hpp"
 
 /*----------------------------------------------------------------------------*/
 
@@ -133,9 +134,9 @@ bool plugin099Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   u32_address = (u32_address << 8) | s_frame.pu8_address[1];
   u32_address = (u32_address << 8) | s_frame.pu8_address[0];
 
-  output(ps_plugin->pc_name, "ID=%08d;SWITCH=%x;CMD=%s;", u32_address,
-         (s_frame.u8_rollingCodeMSB << 8) + s_frame.u8_rollingCodeLSB,
-         ppc_SomfyCmd[s_frame.u8_cmdChksum >> 4]);
+  fPfxOutput(ps_plugin->pc_name, "ID=%08d;SWITCH=%x;CMD=%s;", u32_address,
+             (s_frame.u8_rollingCodeMSB << 8) + s_frame.u8_rollingCodeLSB,
+             ppc_SomfyCmd[s_frame.u8_cmdChksum >> 4]);
 
   return true;
 }
@@ -268,13 +269,13 @@ bool plugin099Tx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   ps_rawSignal->u16_pulses = pu16_pulse - ps_rawSignal->pu16_pulses;
   // For pairing, retransmit 7 times the frame otherwise retransmit only once.
   //  ps_rawSignal->u8_repeats = b_pairing ? 7 : 1;
-  ps_rawSignal->u8_repeats = b_pairing ? 1 : 1;
+  ps_rawSignal->u8_repeats = b_pairing ? 7 : 1;
 
   o_somfyEeprom.writeVariable(&i_address, sizeof(i_address), &u16_rollingCode,
                               sizeof(u16_rollingCode));
 
   if (b_pairing) {
-    o_usb.printf("20;%02X;OK;\r\n", u8_sequenceNumber++);
+    fPfxOutput("OK", NULL);
   }
 
   return true;
@@ -290,8 +291,8 @@ void plugin099Init() {
 
 /*----------------------------------------------------------------------------*/
 
-void plugin099Show(const Command *ps_plugin, const char *pc_option) {
-  (void) ps_plugin;
+void plugin099Show(const Command *ps_command, const char *pc_option) {
+  (void) ps_command;
   (void) pc_option;
 
   uint8_t u8_kSize;
@@ -306,15 +307,15 @@ void plugin099Show(const Command *ps_plugin, const char *pc_option) {
     if (pv_handle == NULL) {
       break;
     }
-    o_usb.printf("RTS Record Address=%06X, RC=%04X\r\n", *((uint32_t *) pv_key),
-                 *((uint16_t *) pv_data));
+    fOutput("RTS Record Address=%06X, RC=%04X\r\n", *((uint32_t *) pv_key),
+            *((uint16_t *) pv_data));
   }
 }
 
 /*----------------------------------------------------------------------------*/
 
-void plugin099Clean(const Command *ps_plugin, const char *pc_option) {
-  (void) ps_plugin;
+void plugin099Clean(const Command *ps_command, const char *pc_option) {
+  (void) ps_command;
   (void) pc_option;
 
   o_somfyEeprom.clear();

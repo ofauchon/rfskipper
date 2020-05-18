@@ -55,8 +55,7 @@ public:
     usart_disable_error_interrupt(_o_usart);
   }
 
-  void puts(const char *pc_string);
-  int printf(const char *format, ...);
+  void output(const char *pc_string, int i_length);
 };
 
 /*----------------------------------------------------------------------------*/

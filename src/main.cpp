@@ -40,15 +40,18 @@ volatile uint32_t u32_systemMillis = 0;
 static void clock_setup() {
   rcc_clock_setup_in_hse_8mhz_out_72mhz();
 
-  /* Enable clocks for GPIO port A/C for LED and USART1. */
+  /* Enable clocks for GPIO port A/C for LED. */
   rcc_periph_clock_enable(RCC_GPIOA);
   rcc_periph_clock_enable(RCC_GPIOB);
   rcc_periph_clock_enable(RCC_GPIOC);
   rcc_periph_clock_enable(RCC_AFIO);
+#ifdef USART_ENABLE
   rcc_periph_clock_enable(RCC_USART1);
-
+#endif
+#ifdef USB_ENABLE
   rcc_periph_clock_enable(RCC_USB);
   rcc_periph_reset_pulse(RST_USB);
+#endif
 }
 
 /*----------------------------------------------------------------------------*/

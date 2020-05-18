@@ -11,6 +11,10 @@
 
 #include "version.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Exported constants --------------------------------------------------------*/
 
 #define BOARD_IDENT "RFSkipper Gateway, (Firmware " FIRMWARE_VERSION ")"
@@ -36,37 +40,16 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
+extern void usbOutput(const char *pc_string, int i_length);
 extern void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep);
 extern void usbuart_usb_out_cb(usbd_device *ps_dev, uint8_t u8_ep);
+extern void usbPoll(void);
+extern void usbInit(void);
 
 /*----------------------------------------------------------------------------*/
 
-class USB {
-private:
-  uint8_t _pu8_usbdControlBuffer[256];
-  usbd_device *_ps_usbDev;
-  static int _i_configured;
-
-public:
-  static char _pc_serialNumber[9];
-
-private:
-  static void cdcacm_set_config(usbd_device *ps_dev, uint16_t u16_value);
-  static enum usbd_request_return_codes cdcacm_control_request(
-    usbd_device *ps_dev, struct usb_setup_data *ps_req, uint8_t **ppu8_buf,
-    uint16_t *pu16_len,
-    void (**ppf_complete)(usbd_device *, struct usb_setup_data *));
-  static void cdcacm_set_modem_state(usbd_device *ps_dev, int i_itf, bool dsr,
-                                     bool dcd);
-  void readSerialNumber();
-
-public:
-  void init(void);
-  inline void poll(void) { usbd_poll(_ps_usbDev); }
-  inline int cdcacm_get_config(void) { return _i_configured; }
-  void usbuart_usb_out(uint8_t u8_endPoint, uint8_t *pu8_buffer, int i_size);
-  int printf(const char *pc_format, ...);
-  int puts(const char *pc_string);
-};
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __USB_H */

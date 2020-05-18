@@ -161,8 +161,8 @@ bool plugin048Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
 #endif
 
   //===========================================================================
-  output("Oregon TempHygro", "ID=%05X;TEMP=%04x;HUM=%02x;BAT=%s;", i_address,
-         i_temperature, i_humidity, i_flag & 0x4 ? "LOW" : "OK");
+  fPfxOutput("Oregon TempHygro", "ID=%05X;TEMP=%04x;HUM=%02x;BAT=%s;",
+             i_address, i_temperature, i_humidity, i_flag & 0x4 ? "LOW" : "OK");
 
   return true;
 }

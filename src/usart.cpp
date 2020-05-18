@@ -6,7 +6,6 @@
 #include <libopencm3/stm32/rcc.h>
 
 #include "usart.hpp"
-#include "utils.hpp"
 
 /*----------------------------------------------------------------------------*/
 /*
@@ -34,26 +33,11 @@ void USART::init(USART_BASE o_usart, uint32_t u32_baudRate,
 
 /*----------------------------------------------------------------------------*/
 
-int USART::printf(const char *pc_format, ...) {
-  char pc_message[128];
-  va_list s_args;
-  int i_length;
-
-  va_start(s_args, pc_format);
-  i_length = vsprintf(pc_message, pc_format, s_args);
-  va_end(s_args);
-
-  puts(pc_message);
-
-  return i_length;
-}
-
-/*----------------------------------------------------------------------------*/
-
-void USART::puts(const char *pc_string) {
+void USART::output(const char *pc_string, int i_length) {
   uint8_t u8_byte;
 
-  while ((u8_byte = (uint8_t) *pc_string++) != 0) {
+  while (i_length-- > 0) {
+    u8_byte = (uint8_t) *pc_string++;
     if (u8_byte == '\n') {
       send('\r');
     }

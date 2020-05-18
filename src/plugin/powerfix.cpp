@@ -98,8 +98,8 @@ bool plugin013Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   }
 
   //===========================================================================
-  output(ps_plugin->pc_name, "ID=%04x;SWITCH=%02x;CMD=%s;", i_address,
-         i_unitCode, ppc_PowerFixCmd[i_command]);
+  fPfxOutput(ps_plugin->pc_name, "ID=%04x;SWITCH=%02x;CMD=%s;", i_address,
+             i_unitCode, ppc_PowerFixCmd[i_command]);
 
   return true;
 }

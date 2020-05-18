@@ -6,7 +6,7 @@
 
 #include "standard.hpp"
 #include "spi.hpp"
-#include "usb.hpp"
+#include "usb.h"
 #include "rfm69_registers.hpp"
 
 /*----------------------------------------------------------------------------*/
@@ -122,7 +122,6 @@ public:
     writeRegister(REG_PACKETCONFIG2,
                   readRegister(REG_PACKETCONFIG2) | RF_PACKET2_RESTART_RX);
   }
-  void testReset();
 
   RFM69Mode setMode(RFM69Mode e_mode);
   void waitForModeReady();
@@ -137,7 +136,7 @@ public:
   void reset();
   void rcCalibration();
   bool setAESEncryption(const uint8_t *pu8_aesKey, int i_keyLength);
-  void dumpRegisters(USB &o_usb);
+  void dumpRegisters();
   inline uint8_t getVersion() { return readRegister(REG_VERSION); }
 
 public:

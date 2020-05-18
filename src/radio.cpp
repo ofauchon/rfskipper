@@ -1,6 +1,7 @@
 // Simple RF69 demo application.
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <libopencm3/stm32/rcc.h>
@@ -14,13 +15,16 @@
 #include "radio.hpp"
 #include "standard.hpp"
 #include "rfm69.hpp"
-#ifdef USART_DEBUG
+#ifdef USART_ENABLE
 #include "usart.hpp"
 #endif
-#include "usb.hpp"
+#ifdef USB_ENABLE
+#include "usb.h"
+#endif
 #include "ring.hpp"
 #include "eventqueue.hpp"
 #include "plugin.hpp"
+#include "utils.hpp"
 
 /*----------------------------------------------------------------------------*/
 
@@ -71,24 +75,22 @@ const uint8_t u8_commands = sizeof(ps_commands) / sizeof(Command);
 namespace {
 RFM69 o_rfm69;
 RING<256> o_cmdIn;
-#ifdef USART_DEBUG
+#ifdef USART_ENABLE
 RING<128> o_cmdOut;
 #endif
 EventQueue o_queue;
 bool b_rfDebug = false;
+volatile uint8_t u8_ledState = LED_IDLE;
 volatile uint32_t u32_txTimeout = 0;
 volatile Rfm69State e_state = IDLE;
 RawSignal s_rawSignalIn;
 RawSignal s_rawSignalOut;
-uint8_t u8_ledState;
 } // namespace
 
 // global variables accessed from the plugins
-USB o_usb;
-#ifdef USART_DEBUG
+#ifdef USART_ENABLE
 USART o_usart;
 #endif
-uint8_t u8_sequenceNumber = 0;
 
 /*----------------------------------------------------------------------------*/
 /**
@@ -156,7 +158,7 @@ testAndSetState(volatile Rfm69State &e_state, Rfm69State e_currentState,
 }
 
 /*----------------------------------------------------------------------------*/
-#ifdef USART_DEBUG
+#ifdef USART_ENABLE
 extern "C" void usart1_isr(void) {
   /* Check if we were called because of RXNE. */
   if (((USART_CR1(USART1) & USART_CR1_RXNEIE) != 0) &&
@@ -408,9 +410,9 @@ extern "C" void tim3_isr(void) {
 }
 
 /*----------------------------------------------------------------------------*/
-
+#ifdef USB_ENABLE
 extern "C" void usb_lp_can_rx0_isr(void) {
-  o_usb.poll();
+  usbPoll();
 }
 
 /*----------------------------------------------------------------------------*/
@@ -430,7 +432,7 @@ void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep) {
     }
   }
 }
-
+#endif
 /*----------------------------------------------------------------------------*/
 
 void setParameter(const Command *ps_command, const char *pc_args) {
@@ -483,16 +485,14 @@ void recvUsart() {
   if (memcmp(pc_commandLine, "10;", 3) == 0) {
     pc_src = &pc_commandLine[3];
     if (memcmp(pc_src, "PING;", 5) == 0) {
-      o_usb.printf("20;%02X;PONG;\r\n", u8_sequenceNumber++);
+      fPfxOutput("PONG", NULL);
     } else if (memcmp(pc_src, "VERSION;", 8) == 0) {
-      o_usb.printf("20;%02X;VER=0.1;REV=%02x;BUILD=%02x;\r\n",
-                   u8_sequenceNumber++, 0x07, 0x33);
+      fPfxOutput(NULL, "VER=0.1;REV=%02x;BUILD=%02x;", 0x07, 0x33);
     } else if (memcmp(pc_src, "RFDEBUG=O", 9) == 0) {
       b_rfDebug = pc_src[9] == 'N';
-      o_usb.printf("20;%02X;RFDEBUG=%s;\r\n", u8_sequenceNumber++,
-                   b_rfDebug ? "ON" : "OFF");
+      fPfxOutput(NULL, "RFDEBUG=%s;", b_rfDebug ? "ON" : "OFF");
     } else if (memcmp(pc_src, "RFDUMP", 6) == 0) {
-      o_rfm69.dumpRegisters(o_usb);
+      o_rfm69.dumpRegisters();
     } else {
       getParamAsString(&pc_src, &pc_type);
 
@@ -544,7 +544,6 @@ void recvRfStart() {
 
 void recvRfStop() {
   register const Plugin *ps_plugin;
-  bool b_identified;
   int i_pulses;
   int i;
 
@@ -553,28 +552,23 @@ void recvRfStop() {
   i_pulses = s_rawSignalIn.u16_pulses;
   if (i_pulses > MIN_RAW_PULSES) {
     if (b_rfDebug) {
-      o_usb.printf("20;%02X;DEBUG;Pulses=%d;Pulses(uSec)=", u8_sequenceNumber++,
-                   i_pulses);
+      fOutput("20;%02X;DEBUG;Pulses=%d;Pulses(uSec)=", u8_sequenceNumber++,
+              i_pulses);
 
       for (i = 0; i < i_pulses; i++) {
-        o_usb.printf(i == i_pulses - 1 ? "%d;\n" : "%d,",
-                     s_rawSignalIn.pu16_pulses[i] * 10);
+        fOutput(i == i_pulses - 1 ? "%d;\r\n" : "%d,",
+                s_rawSignalIn.pu16_pulses[i] * 10);
       }
     }
 
-    b_identified = false;
     ps_plugin = ps_plugins;
     do {
       if (ps_plugin->pf_rxCore != NULL &&
           ps_plugin->pf_rxCore(ps_plugin, &s_rawSignalIn, NULL)) {
-        b_identified = true;
+        u8_ledState = LED_START_BLINK;
         break;
       }
     } while ((uint)(++ps_plugin - ps_plugins) < u8_plugins);
-
-    if (b_identified) {
-      u8_ledState = LED_START_BLINK;
-    }
   }
 
   o_queue.put(EVENT_RF_START_IN, 0);
@@ -646,7 +640,7 @@ void setup() {
 
   timer3Init();
 
-#ifdef USART_DEBUG
+#ifdef USART_ENABLE
   // Init USART device on A9-TX and A10-RX
   nvic_enable_irq(NVIC_USART1_IRQ);
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
@@ -655,17 +649,16 @@ void setup() {
 #endif
 
   o_queue.init();
-  o_usb.init();
-
-#ifdef USART_DEBUG
+#ifdef USB_ENABLE
+  usbInit();
+#endif
+#ifdef USART_ENABLE
   o_usart.init(USART1_BASE);
   o_usart.enableRxInterrupt();
   o_usart.enable();
 #endif
 
-  //   o_usart.puts("USART initialized\n");
-  o_usb.printf("20;%02X;Nodo RadioFrequencyLink - RFSkipper V0.1 - R%02d;\r\n",
-               u8_sequenceNumber++, 13);
+  fPfxOutput(NULL, "Nodo RadioFrequencyLink - RFSkipper V0.1 - R%02d;", 14);
 
   pluginsInitialization();
 
@@ -680,7 +673,7 @@ void setup() {
 
   u8_version = o_rfm69.getVersion();
   if (u8_version != 0x24) {
-    o_usb.puts("Couldn't detect RFM69 device\r\n");
+    fOutput("Couldn't detect RFM69 device\r\n");
     fatalError(1);
   }
 
@@ -695,8 +688,7 @@ void setup() {
   gpio_set(GPIOC, GPIO13);
 
   i_rssiAverage /= 1024;
-  o_usb.printf("20;%02X;DEBUG;RFM69 calibrated RSSI=%d\r\n",
-               u8_sequenceNumber++, i_rssiAverage);
+  fPfxOutput("DEBUG", "RFM69 calibrated RSSI=%d", i_rssiAverage);
 
   // should be average RSSI when no signal + 20dB (~ -80dB)
   o_rfm69.setFixedThreshold(i_rssiAverage + 20);
@@ -707,6 +699,7 @@ void setup() {
 /*----------------------------------------------------------------------------*/
 
 void loop() {
+  static uint32_t u32_stopBlink;
   uint8_t u8_event;
 
   if (o_queue.isEmpty()) {
@@ -740,24 +733,23 @@ void loop() {
     }
   }
 
-  if ((millis() & 511) == 0) {
-    //      int i_rssi = o_rfm69.readRSSI(false);
-    //      o_usart.printf("RSSI=%d\n", i_rssi);
-    switch (u8_ledState) {
-    case LED_IDLE:
-      break;
-    case LED_START_BLINK:
-      gpio_clear(GPIOC, GPIO13);
-      u8_ledState = LED_ON;
-      break;
-    case LED_ON:
-      gpio_set(GPIOC, GPIO13);
+  switch (u8_ledState) {
+  case LED_IDLE:
+    break;
+  case LED_START_BLINK:
+    gpio_clear(GPIOC, GPIO13);
+    u32_stopBlink = u32_systemMillis + 500;
+    u8_ledState = LED_ON;
+    break;
+  case LED_ON:
+    if (u32_systemMillis == u32_stopBlink) {
       u8_ledState = LED_OFF;
-      break;
-    case LED_OFF:
-      u8_ledState = LED_IDLE;
-      break;
     }
+    break;
+  case LED_OFF:
+    gpio_set(GPIOC, GPIO13);
+    u8_ledState = LED_IDLE;
+    break;
   }
 }
 
