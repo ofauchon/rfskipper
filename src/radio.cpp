@@ -220,9 +220,9 @@ void rfm69Reset(void) {
    * before using the chip.
    */
   gpio_set(GPIOA, GPIO0);
-  msleep(1);
+  msleep(2);
   gpio_clear(GPIOA, GPIO0);
-  msleep(5);
+  msleep(10);
 }
 
 /*----------------------------------------------------------------------------*/
