@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#ifndef _WIN32
+#ifndef WITH_REGRESSION
 #include "radio.hpp"
 #else
 #include "regression.hpp"
