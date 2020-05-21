@@ -74,7 +74,7 @@ bool plugin048Rx(const Plugin *ps_plugin, RawSignal *ps_rawSignal,
   // Oregon v3: preambule is 48 pulses length (16 bits '1')
   for (i = 0; i < 47; i++) {
     if (*pu16_pulses++ > OREGON_PULSEMID) {
-      return -1; // illegal pulse during preambule
+      return false; // illegal pulse during preambule
     }
   }
   b_clockAligned = *pu16_pulses++ < OREGON_PULSEMID;

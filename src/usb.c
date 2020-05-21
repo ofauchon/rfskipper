@@ -414,7 +414,7 @@ void readSerialNumber(void) {
 
 /*----------------------------------------------------------------------------*/
 
-void usbPoll(void) {
+void usb_lp_can_rx0_isr(void) {
   usbd_poll(ps_usbDev);
 }
 

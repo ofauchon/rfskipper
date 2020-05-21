@@ -68,6 +68,7 @@ extern bool getParamAsEnum(char **ppc_start, int *pi_value,
 extern PluginFunction plugin004Rx;
 extern PluginFunction plugin004Tx;
 extern PluginFunction plugin013Rx;
+extern PluginFunction plugin046Rx;
 extern PluginFunction plugin048Rx;
 extern PluginFunction plugin099Rx;
 extern PluginFunction plugin099Tx;

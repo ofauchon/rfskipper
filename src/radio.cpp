@@ -405,17 +405,12 @@ extern "C" void tim3_isr(void) {
       u16_timer += timer_get_counter(TIM3);
       timer_set_oc_value(TIM3, TIM_OC3, u16_timer);
     }
-    timer_clear_flag(TIM3, TIM_SR_CC3IF);
+    timer_clear_flag(TIM3, TIM_SR_CC3IF | TIM_SR_CC3OF);
   }
 }
 
 /*----------------------------------------------------------------------------*/
 #ifdef USB_ENABLE
-extern "C" void usb_lp_can_rx0_isr(void) {
-  usbPoll();
-}
-
-/*----------------------------------------------------------------------------*/
 // When host computer writes data to usbuart
 void usbuart_usb_in_cb(usbd_device *ps_dev, uint8_t u8_ep) {
   // Read usb packet data
@@ -673,7 +668,7 @@ void setup() {
 
   u8_version = o_rfm69.getVersion();
   if (u8_version != 0x24) {
-    fOutput("Couldn't detect RFM69 device\r\n");
+    fOutput("Couldn't detect RFM69 device v%d\r\n", u8_version);
     fatalError(1);
   }
 

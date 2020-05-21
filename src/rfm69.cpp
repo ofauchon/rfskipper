@@ -78,6 +78,7 @@ static const uint8_t g_ppu8_rfm69BaseConfig[][2] = {
    /* 0x07 */ { REG_FRFMSB, RF_FRFMSB_433 },
    /* 0x08 */ { REG_FRFMID, RF_FRFMID_433 },
    /* 0x09 */ { REG_FRFLSB, RF_FRFLSB_433 },
+   /* 0x0B */ { REG_AFCCTRL, RF_AFCLOWBETA_ON }, //NOW
 //   /* 0x0D */ { REG_LISTEN1, 0x92 },
 //   /* 0x0E */ { REG_LISTEN2, 0x49 },
 //   /* 0x0F */ { REG_LISTEN3, 0xAA },
@@ -93,15 +94,15 @@ static const uint8_t g_ppu8_rfm69BaseConfig[][2] = {
 
    // RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4khz)
    /* 0x18 */ { REG_LNA, RF_LNA_ZIN_200 | RF_LNA_GAINSELECT_AUTO }, //LNA input impedance 200 Ohm, auto gain select
-   /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_001 | RF_RXBW_MANT_20 | RF_RXBW_EXP_1 }, // 20 en 5 berekend
-   /* 0x1B */ { REG_OOKPEAK, RF_OOKPEAK_THRESHTYPE_FIXED | RF_OOKPEAK_PEAKTHRESHSTEP_000 | RF_OOKPEAK_PEAKTHRESHDEC_000 }, //74
+   /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 }, // 20 en 5 berekend
+   /* 0x1B */ { REG_OOKPEAK, RF_OOKPEAK_THRESHTYPE_AVERAGE | RF_OOKPEAK_PEAKTHRESHSTEP_000 | RF_OOKPEAK_PEAKTHRESHDEC_000 }, //74
    //* 0x1C */ { REG_OOKAVG, 0x80 },//80   //Geen idee waarvoor
 //   /* 0x1D */ { REG_OOKFIX, 6 }, //0   //zie pagina 30 (default is 6)
    /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_00 | RF_DIOMAPPING1_DIO3_01 }, //DIO0 is the only IRQ we're using
    /* 0x26 */ { REG_DIOMAPPING2, RF_DIOMAPPING2_CLKOUT_OFF }, // DIO5 ClkOut disable for power saving
    /* 0x28 */ { REG_IRQFLAGS2, RF_IRQFLAGS2_FIFOOVERRUN }, // Writing to this bit ensures the FIFO & status flags are reset
    /* 0x29 */ { REG_RSSITHRESH, 160 }, //220 }, //must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
-   /* 0x6F */ { REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 } // run DAGC continuously in RX mode, recommended default for AfcLowBetaOn=0
+   /* 0x6F */ { REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA1 } // run DAGC continuously in RX mode, recommended default for AfcLowBetaOn=0
 };
 /*
 { REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00 }, // RegDataModul: Packet mode, FSK, no shaping
