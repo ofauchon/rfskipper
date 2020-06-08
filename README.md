@@ -6,7 +6,6 @@ Welcome to the RFSkipper project
 RFSkipper is a open-source, free, RF Gateway for home automation and IoT.
 
 
-
 Table of Contents
 =================
 
@@ -16,7 +15,6 @@ Table of Contents
  - [License](#license)
  - [Support](#support)
  - [Contributing](#contributing)
-g
 
 Overview
 ========
@@ -26,7 +24,17 @@ TODO
 Installation
 ============
 
-TODO
+Prerequisite: plateformio and Git available on your system
+
+```
+git clone git@github.com:ofauchon/rfskipper
+cd rfskipper
+
+pio update
+pio run 
+pio run --target upload
+```
+
 
 Documentation
 =============
