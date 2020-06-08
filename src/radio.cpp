@@ -80,6 +80,7 @@ RING<128> o_cmdOut;
 #endif
 EventQueue o_queue;
 bool b_rfDebug = false;
+bool b_rfBridge = false;
 volatile uint8_t u8_ledState = LED_IDLE;
 volatile uint32_t u32_txTimeout = 0;
 volatile Rfm69State e_state = IDLE;
@@ -488,6 +489,10 @@ void recvUsart() {
       fPfxOutput(NULL, "RFDEBUG=%s;", b_rfDebug ? "ON" : "OFF");
     } else if (memcmp(pc_src, "RFDUMP", 6) == 0) {
       o_rfm69.dumpRegisters();
+    } else if (memcmp(pc_src, "RFBRIDGE=O", 10) == 0) {
+      b_rfDebug = pc_src[10] == 'N';
+      b_rfBridge = b_rfDebug;
+      fPfxOutput(NULL, "RFBRIDGE=%s;", b_rfBridge ? "ON" : "OFF");
     } else {
       getParamAsString(&pc_src, &pc_type);
 
@@ -555,15 +560,18 @@ void recvRfStop() {
                 s_rawSignalIn.pu16_pulses[i] * 10);
       }
     }
-
-    ps_plugin = ps_plugins;
-    do {
-      if (ps_plugin->pf_rxCore != NULL &&
-          ps_plugin->pf_rxCore(ps_plugin, &s_rawSignalIn, NULL)) {
-        u8_ledState = LED_START_BLINK;
-        break;
-      }
-    } while ((uint)(++ps_plugin - ps_plugins) < u8_plugins);
+    if (b_rfBridge) {
+      u8_ledState = LED_START_BLINK;
+    } else {
+      ps_plugin = ps_plugins;
+      do {
+        if (ps_plugin->pf_rxCore != NULL &&
+            ps_plugin->pf_rxCore(ps_plugin, &s_rawSignalIn, NULL)) {
+          u8_ledState = LED_START_BLINK;
+          break;
+        }
+      } while ((uint)(++ps_plugin - ps_plugins) < u8_plugins);
+    }
   }
 
   o_queue.put(EVENT_RF_START_IN, 0);
