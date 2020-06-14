@@ -70,6 +70,7 @@ extern PluginFunction plugin004Tx;
 extern PluginFunction plugin013Rx;
 extern PluginFunction plugin046Rx;
 extern PluginFunction plugin048Rx;
+extern PluginFunction plugin061Rx;
 extern PluginFunction plugin099Rx;
 extern PluginFunction plugin099Tx;
 extern CommandFunction plugin099Show;

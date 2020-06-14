@@ -19,6 +19,7 @@ const Plugin ps_plugins[] = {
    { 13, "Powerfix", plugin013Rx, NULL },
    { 46, "Xiron", plugin046Rx, NULL },
    { 48, "Oregon", plugin048Rx, NULL },
+   { 61, "EV1527", plugin061Rx, NULL },
    { 99, "RTS", plugin099Rx, plugin099Tx },
    { 255, "TicPulseV2", plugin255Rx, NULL }
 };
